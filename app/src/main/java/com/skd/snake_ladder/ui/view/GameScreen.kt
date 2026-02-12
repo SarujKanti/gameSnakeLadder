@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -101,6 +104,18 @@ fun GameScreen(viewModel: GameViewModel) {
             isRolling = state.isRolling,
             onRoll = { viewModel.rollDice() }
         )
+        if (state.winner != null) {
+        AlertDialog(
+            onDismissRequest = {},
+            confirmButton = {
+                Button(onClick = { viewModel.resetGame() }) {
+                    Text("Play Again")
+                }
+            },
+            title = { Text("Game Over") },
+            text = { Text("🏆 ${state.winner} Wins!") }
+        )
+    }
     }
 
 }
