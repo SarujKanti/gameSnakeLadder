@@ -2,7 +2,8 @@ package com.skd.snake_ladder.ui.view
 
 import android.graphics.Paint
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -12,7 +13,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.unit.dp
 import com.skd.snake_ladder.core.BoardMapper
 import com.skd.snake_ladder.data.SnakeLadderConfig
 import kotlin.math.abs
@@ -22,7 +22,11 @@ fun BoardCanvas(
     playerPositions: List<Pair<Int, Color>>
 ) {
 
-    Canvas(modifier = Modifier.size(520.dp)) {
+    Canvas(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+    ) {
 
         val cellSize = size.width / 10
 
