@@ -14,7 +14,6 @@ class GameEngine {
         }
 
         newPosition = SnakeLadderConfig.snakes[newPosition]
-
             ?: SnakeLadderConfig.ladders[newPosition]
                     ?: newPosition
 
