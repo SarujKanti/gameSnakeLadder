@@ -2,6 +2,7 @@ package com.skd.snake_ladder.data
 
 object SnakeLadderConfig {
 
+    // for snake start / end point
     val snakes = mapOf(
         99 to 54,
         95 to 72,
