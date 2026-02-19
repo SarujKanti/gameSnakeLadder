@@ -124,7 +124,6 @@ fun BoardCanvas(
                     endOffset.y
                 )
             }
-
             drawPath(
                 path = path,
                 color = Color.Red,
