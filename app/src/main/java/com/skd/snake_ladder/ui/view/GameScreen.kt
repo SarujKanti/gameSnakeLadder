@@ -85,8 +85,6 @@ fun GameScreen(viewModel: GameViewModel) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-
-
         BoardCanvas(
             playerPositions = listOf(
                 Pair(state.playerPosition, Color.Blue),
