@@ -3,7 +3,6 @@ package com.skd.snake_ladder.core
 import com.skd.snake_ladder.data.SnakeLadderConfig
 
 class GameEngine {
-
     fun calculateNewPosition(current: Int, dice: Int): Int {
 
         var newPosition = current
