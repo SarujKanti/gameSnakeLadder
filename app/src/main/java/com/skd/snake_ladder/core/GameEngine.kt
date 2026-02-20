@@ -20,7 +20,6 @@ class GameEngine {
         return newPosition
     }
 
-
     fun checkWinner(position: Int): Boolean {
         return position == 100
     }
