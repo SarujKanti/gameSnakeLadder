@@ -45,7 +45,6 @@ fun GameScreen(viewModel: GameViewModel) {
 
             when (state.gameMode) {
                 GameMode.VS_COMPUTER -> {
-
                     ProfileSection(
                         name = "👤 Player",
                         position = state.playerPosition,
@@ -62,7 +61,6 @@ fun GameScreen(viewModel: GameViewModel) {
                 }
 
                 GameMode.TWO_PLAYERS -> {
-
                     ProfileSection(
                         name = "👤 Player 1",
                         position = state.playerPosition,
