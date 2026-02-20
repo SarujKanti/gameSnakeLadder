@@ -37,7 +37,7 @@ fun GameScreen(viewModel: GameViewModel) {
     ) {
 
         // 👥 Profile Section
-        // 👥 Profile Section
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
