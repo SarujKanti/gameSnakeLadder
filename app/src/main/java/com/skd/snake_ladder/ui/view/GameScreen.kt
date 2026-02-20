@@ -44,7 +44,6 @@ fun GameScreen(viewModel: GameViewModel) {
         ) {
 
             when (state.gameMode) {
-
                 GameMode.VS_COMPUTER -> {
 
                     ProfileSection(
