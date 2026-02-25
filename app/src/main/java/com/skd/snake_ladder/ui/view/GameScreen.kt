@@ -75,7 +75,6 @@ fun GameScreen(viewModel: GameViewModel) {
                         modifier = Modifier.weight(1f)
                     )
                 }
-
                 else -> {
                     // Optional: Nothing if mode not selected yet
                 }
