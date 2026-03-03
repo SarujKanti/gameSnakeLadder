@@ -89,7 +89,6 @@ fun GameScreen(viewModel: GameViewModel) {
             )
         )
         Spacer(modifier = Modifier.height(20.dp))
-
         DiceSection(
             diceValue = state.diceValue,
             isRolling = state.isRolling,
