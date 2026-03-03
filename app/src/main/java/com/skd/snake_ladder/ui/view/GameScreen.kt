@@ -88,7 +88,6 @@ fun GameScreen(viewModel: GameViewModel) {
                 Pair(state.opponentPosition, Color.Magenta)
             )
         )
-
         Spacer(modifier = Modifier.height(20.dp))
 
         DiceSection(
