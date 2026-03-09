@@ -95,7 +95,6 @@ fun GameScreen(viewModel: GameViewModel) {
             onRoll = { viewModel.rollDice() }
         )
 
-
         if (state.winner != null) {
         AlertDialog(
             onDismissRequest = {},
