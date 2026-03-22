@@ -80,14 +80,14 @@ fun GameScreen(viewModel: GameViewModel) {
                 }
             }
         }
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(22.dp))
         BoardCanvas(
             playerPositions = listOf(
                 Pair(state.playerPosition, Color.Blue),
                 Pair(state.opponentPosition, Color.Magenta)
             )
         )
-        
+
         Spacer(modifier = Modifier.height(20.dp))
         DiceSection(
             diceValue = state.diceValue,
