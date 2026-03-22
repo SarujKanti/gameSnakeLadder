@@ -85,6 +85,7 @@ fun GameScreen(viewModel: GameViewModel) {
         BoardCanvas(
             playerPositions = listOf(
                 Pair(state.playerPosition, Color.Blue),
+                
                 Pair(state.opponentPosition, Color.Magenta)
             )
         )
