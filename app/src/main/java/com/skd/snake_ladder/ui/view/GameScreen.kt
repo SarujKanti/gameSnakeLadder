@@ -98,6 +98,7 @@ fun GameScreen(viewModel: GameViewModel) {
         )
 
 
+
         if (state.winner != null) {
         AlertDialog(
             onDismissRequest = {},
