@@ -1,0 +1,24 @@
+# Normalize line endings: store as LF, checkout as LF on all platforms
+* text=auto eol=lf
+
+# Explicitly mark XML/text files as text with LF
+*.xml text eol=lf
+*.kt text eol=lf
+*.kts text eol=lf
+*.gradle text eol=lf
+*.properties text eol=lf
+*.pro text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+
+# Binary files — never touch line endings
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.mp3 binary
+*.wav binary
+*.ogg binary
+*.keystore binary
+*.jks binary
