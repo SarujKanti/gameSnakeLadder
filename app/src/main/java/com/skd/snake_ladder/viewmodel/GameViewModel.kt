@@ -1,8 +1,10 @@
 package com.skd.snake_ladder.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.skd.snake_ladder.core.GameEngine
+import com.skd.snake_ladder.core.SoundManager
 import com.skd.snake_ladder.domain.model.GameMode
 import com.skd.snake_ladder.domain.model.GameState
 import com.skd.snake_ladder.domain.usecase.RollDiceUseCase
@@ -11,44 +13,46 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class GameViewModel : ViewModel() {
+class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val engine = GameEngine()
     private val diceUseCase = RollDiceUseCase()
+    private val soundManager = SoundManager(application)
 
     private val _state = MutableStateFlow(GameState())
     val state: StateFlow<GameState> = _state
 
     fun rollDice() {
-
-        if (_state.value.isRolling || _state.value.winner != null) return
+        val current = _state.value
+        if (current.isRolling || current.winner != null) return
+        // Block player input during computer's turn
+        if (current.gameMode == GameMode.VS_COMPUTER && !current.isPlayerTurn) return
 
         viewModelScope.launch {
 
             _state.value = _state.value.copy(isRolling = true)
 
+            soundManager.playDiceSound()
             delay(300)
 
             val dice = diceUseCase.roll()
-            val current = _state.value
+            val snapshot = _state.value
 
             val startPosition =
-                if (current.isPlayerTurn)
-                    current.playerPosition
-                else
-                    current.opponentPosition
+                if (snapshot.isPlayerTurn) snapshot.playerPosition
+                else snapshot.opponentPosition
 
             val targetPosition = startPosition + dice
 
             if (targetPosition > 100) {
-                _state.value = current.copy(
+                _state.value = snapshot.copy(
                     diceValue = dice,
                     isRolling = false
                 )
                 return@launch
             }
 
-            // 🎯 Step-by-step movement
+            // Step-by-step movement animation
             var tempPosition = startPosition
 
             repeat(dice) {
@@ -56,46 +60,42 @@ class GameViewModel : ViewModel() {
                 tempPosition++
 
                 _state.value =
-                    if (current.isPlayerTurn)
-                        _state.value.copy(
-                            playerPosition = tempPosition,
-                            diceValue = dice
-                        )
+                    if (snapshot.isPlayerTurn)
+                        _state.value.copy(playerPosition = tempPosition, diceValue = dice)
                     else
-                        _state.value.copy(
-                            opponentPosition = tempPosition,
-                            diceValue = dice
-                        )
+                        _state.value.copy(opponentPosition = tempPosition, diceValue = dice)
             }
 
-            // 🐍 Check snake / ladder AFTER movement
+            // Apply snake or ladder after movement
             val finalPosition = engine.calculateNewPosition(tempPosition, 0)
 
             delay(400)
 
             _state.value =
-                if (current.isPlayerTurn)
-                    _state.value.copy(
-                        playerPosition = finalPosition
-                    )
+                if (snapshot.isPlayerTurn)
+                    _state.value.copy(playerPosition = finalPosition)
                 else
-                    _state.value.copy(
-                        opponentPosition = finalPosition
-                    )
+                    _state.value.copy(opponentPosition = finalPosition)
 
-            // 🏆 Check winner
+            // Determine winner name (fix for TWO_PLAYERS mode)
             val isWinner = engine.checkWinner(finalPosition)
+            val winnerName = if (isWinner) {
+                if (snapshot.isPlayerTurn) {
+                    if (snapshot.gameMode == GameMode.TWO_PLAYERS) "Player 1" else "Player"
+                } else {
+                    if (snapshot.gameMode == GameMode.TWO_PLAYERS) "Player 2" else "Computer"
+                }
+            } else null
+
+            if (isWinner) soundManager.playWinSound()
 
             _state.value = _state.value.copy(
                 isRolling = false,
-                isPlayerTurn = !current.isPlayerTurn,
-                winner = if (isWinner)
-                    if (current.isPlayerTurn) "Player"
-                    else "Computer"
-                else null
+                isPlayerTurn = !snapshot.isPlayerTurn,
+                winner = winnerName
             )
 
-            // 🤖 Auto computer turn
+            // Auto computer turn in VS_COMPUTER mode
             if (_state.value.gameMode == GameMode.VS_COMPUTER &&
                 !_state.value.isPlayerTurn &&
                 _state.value.winner == null
@@ -103,7 +103,6 @@ class GameViewModel : ViewModel() {
                 delay(800)
                 rollDice()
             }
-
         }
     }
 
@@ -113,5 +112,10 @@ class GameViewModel : ViewModel() {
 
     fun resetGame() {
         _state.value = GameState()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        soundManager.cleanup()
     }
 }

@@ -14,12 +14,18 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.skd.snake_ladder.R
 
 @Composable
 fun DiceSection(
     diceValue: Int,
     isRolling: Boolean,
+    isEnabled: Boolean = !isRolling,
     onRoll: () -> Unit
 ) {
 
@@ -42,10 +48,16 @@ fun DiceSection(
             modifier = Modifier
                 .size(110.dp)
                 .rotate(rotation)
-                .background(Color(0xFF87CEEB), RoundedCornerShape(20.dp)) // 🌤 Sky Blue
-                .clickable(enabled = !isRolling) {
-                    rotationTarget += 720f   // 2 full spins
+                .background(
+                    if (isEnabled) Color(0xFF1565C0) else Color(0xFF90A4AE),
+                    RoundedCornerShape(20.dp)
+                )
+                .clickable(enabled = isEnabled) {
+                    rotationTarget += 720f
                     onRoll()
+                }
+                .semantics {
+                    contentDescription = "Dice showing $diceValue. ${if (isEnabled) "Tap to roll" else "Not your turn"}"
                 },
             contentAlignment = Alignment.Center
         ) {
@@ -60,53 +72,18 @@ fun DiceSection(
                 val bottom = size.height * 0.75f
                 val middle = size.height / 2
 
-                fun drawDot(x: Float, y: Float) {
-                    drawCircle(
-                        color = Color.Black,
-                        radius = dotRadius,
-                        center = Offset(x, y),
-                        style = Fill
-                    )
+                val dotColor = Color.White
+                fun drawDotWhite(x: Float, y: Float) {
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(x, y), style = Fill)
                 }
 
                 when (diceValue) {
-                    1 -> drawDot(center, middle)
-
-                    2 -> {
-                        drawDot(left, top)
-                        drawDot(right, bottom)
-                    }
-
-                    3 -> {
-                        drawDot(center, middle)
-                        drawDot(left, top)
-                        drawDot(right, bottom)
-                    }
-
-                    4 -> {
-                        drawDot(left, top)
-                        drawDot(right, top)
-                        drawDot(left, bottom)
-                        drawDot(right, bottom)
-                    }
-
-                    5 -> {
-                        drawDot(center, middle)
-                        drawDot(left, top)
-                        drawDot(right, top)
-                        drawDot(left, bottom)
-                        drawDot(right, bottom)
-                    }
-
-                    6 -> {
-                        drawDot(left, top)
-                        drawDot(left, middle)
-                        drawDot(left, bottom)
-
-                        drawDot(right, top)
-                        drawDot(right, middle)
-                        drawDot(right, bottom)
-                    }
+                    1 -> drawDotWhite(center, middle)
+                    2 -> { drawDotWhite(left, top); drawDotWhite(right, bottom) }
+                    3 -> { drawDotWhite(center, middle); drawDotWhite(left, top); drawDotWhite(right, bottom) }
+                    4 -> { drawDotWhite(left, top); drawDotWhite(right, top); drawDotWhite(left, bottom); drawDotWhite(right, bottom) }
+                    5 -> { drawDotWhite(center, middle); drawDotWhite(left, top); drawDotWhite(right, top); drawDotWhite(left, bottom); drawDotWhite(right, bottom) }
+                    6 -> { drawDotWhite(left, top); drawDotWhite(left, middle); drawDotWhite(left, bottom); drawDotWhite(right, top); drawDotWhite(right, middle); drawDotWhite(right, bottom) }
                 }
             }
         }
@@ -114,7 +91,13 @@ fun DiceSection(
         Spacer(modifier = Modifier.height(10.dp))
 
         Text(
-            text = if (isRolling) "Rolling..." else "Tap Dice 🎲"
+            text = when {
+                isRolling -> stringResource(R.string.rolling)
+                !isEnabled -> stringResource(R.string.computer_turn)
+                else -> stringResource(R.string.tap_to_roll)
+            },
+            fontSize = 15.sp,
+            color = Color(0xFF37474F)
         )
     }
 }

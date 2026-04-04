@@ -22,6 +22,11 @@ class SoundManager(private val context: Context) {
         mediaPlayer?.start()
     }
 
+    fun cleanup() {
+        mediaPlayer?.release()
+        mediaPlayer = null
+    }
+
     private fun release() {
         mediaPlayer?.release()
         mediaPlayer = null
