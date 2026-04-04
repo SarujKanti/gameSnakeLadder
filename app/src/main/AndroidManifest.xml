@@ -12,17 +12,20 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Snake_ladder"
         tools:targetApi="31">
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden"
             android:theme="@style/Theme.Snake_ladder">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
     </application>
 
 </manifest>

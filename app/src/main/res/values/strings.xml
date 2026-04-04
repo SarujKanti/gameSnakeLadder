@@ -1,3 +1,27 @@
 <resources>
-    <string name="app_name">Snake_ladder</string>
+    <string name="app_name">Snake &amp; Ladder</string>
+    <string name="game_title">Snake &amp; Ladder</string>
+    <string name="game_subtitle">Classic Board Game</string>
+    <string name="select_mode">Select Game Mode</string>
+    <string name="mode_vs_computer">vs Computer</string>
+    <string name="mode_two_players">2 Players</string>
+    <string name="tagline">Climb the ladders, avoid the snakes!</string>
+    <string name="player">Player</string>
+    <string name="player_1">Player 1</string>
+    <string name="player_2">Player 2</string>
+    <string name="computer">Computer</string>
+    <string name="position">Position: %d</string>
+    <string name="your_turn">Your Turn</string>
+    <string name="computer_turn">Computer\'s Turn</string>
+    <string name="player1_turn">Player 1\'s Turn</string>
+    <string name="player2_turn">Player 2\'s Turn</string>
+    <string name="rolling">Rolling\u2026</string>
+    <string name="tap_to_roll">Tap to Roll</string>
+    <string name="game_over">Game Over</string>
+    <string name="winner_message">%s Wins!</string>
+    <string name="play_again">Play Again</string>
+    <string name="back_to_menu">Back to Menu</string>
+    <string name="cd_dice">Dice showing %d</string>
+    <string name="cd_roll_dice">Roll the dice</string>
+    <string name="cd_back">Go back to menu</string>
 </resources>
