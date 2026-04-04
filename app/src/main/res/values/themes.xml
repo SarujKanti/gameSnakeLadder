@@ -1,14 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <!-- Splash screen theme (applied in manifest) -->
-    <style name="Theme.Snake_ladder" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">#FFFFFF</item>
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
-        <item name="postSplashScreenTheme">@style/Theme.Snake_ladder.Main</item>
-    </style>
-
-    <!-- Main app theme after splash dismissal -->
-    <style name="Theme.Snake_ladder.Main" parent="android:Theme.Material.Light.NoActionBar" />
-
+    <style name="Theme.Snake_ladder" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>
