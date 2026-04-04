@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Snake &amp; Ladder</string>
     <string name="game_title">Snake &amp; Ladder</string>
@@ -15,7 +16,7 @@
     <string name="computer_turn">Computer\'s Turn</string>
     <string name="player1_turn">Player 1\'s Turn</string>
     <string name="player2_turn">Player 2\'s Turn</string>
-    <string name="rolling">Rolling\u2026</string>
+    <string name="rolling">Rolling&#8230;</string>
     <string name="tap_to_roll">Tap to Roll</string>
     <string name="game_over">Game Over</string>
     <string name="winner_message">%s Wins!</string>
