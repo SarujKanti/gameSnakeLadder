@@ -22,11 +22,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _state = MutableStateFlow(GameState())
     val state: StateFlow<GameState> = _state
 
-    fun rollDice() {
+    fun rollDice() = rollDiceInternal(computerInitiated = false)
+
+    private fun rollDiceInternal(computerInitiated: Boolean) {
         val current = _state.value
         if (current.isRolling || current.winner != null) return
-        // Block player input during computer's turn
-        if (current.gameMode == GameMode.VS_COMPUTER && !current.isPlayerTurn) return
+        // Only block UI-initiated rolls during computer's turn; computer calls itself directly
+        if (!computerInitiated && current.gameMode == GameMode.VS_COMPUTER && !current.isPlayerTurn) return
 
         viewModelScope.launch {
 
@@ -101,7 +103,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 _state.value.winner == null
             ) {
                 delay(800)
-                rollDice()
+                rollDiceInternal(computerInitiated = true)
             }
         }
     }
