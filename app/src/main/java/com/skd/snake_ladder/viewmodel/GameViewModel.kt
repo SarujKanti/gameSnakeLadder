@@ -45,7 +45,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                                 else snapshot.opponentPosition
 
             if (startPosition + dice > 100) {
-                _state.value = snapshot.copy(diceValue = dice, isRolling = false)
+                _state.value = snapshot.copy(
+                    diceValue    = dice,
+                    isRolling    = false,
+                    isPlayerTurn = !snapshot.isPlayerTurn
+                )
+                if (_state.value.gameMode == GameMode.VS_COMPUTER &&
+                    !_state.value.isPlayerTurn &&
+                    _state.value.winner == null
+                ) {
+                    delay(800)
+                    rollDiceInternal(computerInitiated = true)
+                }
                 return@launch
             }
 
