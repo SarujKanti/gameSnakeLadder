@@ -1,10 +1,6 @@
 package com.skd.snake_ladder.ui.view
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -77,9 +73,6 @@ fun GameScreen(
     // Active snake/ladder positions for board highlight + event overlay
     val activeSnakeFrom  = if (state.lastEvent == GameEvent.SNAKE)  state.lastEventPosition else null
     val activeLadderFrom = if (state.lastEvent == GameEvent.LADDER) state.lastEventPosition else null
-    // Captured outside AnimatedVisibility so exit animation still shows correct icon
-    val isSnakeEvent     = state.lastEvent == GameEvent.SNAKE
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -191,9 +184,7 @@ fun GameScreen(
                     Pair(state.opponentPosition, PlayerPink)
                 ),
                 activeSnakeFrom  = activeSnakeFrom,
-                activeLadderFrom = activeLadderFrom,
-                showOverlay      = state.lastEvent != null,
-                isSnakeEvent     = isSnakeEvent
+                activeLadderFrom = activeLadderFrom
             )
 
             Spacer(modifier = Modifier.height(18.dp))
@@ -252,9 +243,7 @@ fun GameScreen(
 private fun BoardWithOverlay(
     playerPositions: List<Pair<Int, Color>>,
     activeSnakeFrom: Int?,
-    activeLadderFrom: Int?,
-    showOverlay: Boolean,
-    isSnakeEvent: Boolean
+    activeLadderFrom: Int?
 ) {
     Box(
         modifier = Modifier
@@ -271,52 +260,6 @@ private fun BoardWithOverlay(
             activeSnakeFrom  = activeSnakeFrom,
             activeLadderFrom = activeLadderFrom
         )
-
-        Box(
-            modifier         = Modifier.matchParentSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            AnimatedVisibility(
-                visible = showOverlay,
-                enter   = fadeIn(tween(300)),
-                exit    = fadeOut(tween(300))
-            ) {
-                EventOverlay(isSnake = isSnakeEvent)
-            }
-        }
     }
 }
 
-// ── Snake / Ladder pop-up card ──────────────────────────────────────────────
-@Composable
-private fun EventOverlay(isSnake: Boolean) {
-    val bg    = if (isSnake) Color(0xEED32F2F) else Color(0xEE2E7D32)
-    val icon  = if (isSnake) "🐍" else "🪜"
-    val title = if (isSnake) "Snake!" else "Ladder!"
-    val desc  = if (isSnake) "Sliding down\u2026" else "Climbing up!"
-
-    Box(
-        modifier = Modifier
-            .shadow(16.dp, RoundedCornerShape(20.dp))
-            .clip(RoundedCornerShape(20.dp))
-            .background(bg)
-            .padding(horizontal = 32.dp, vertical = 20.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(icon,  fontSize = 48.sp)
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text       = title,
-                color      = Color.White,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize   = 26.sp
-            )
-            Text(
-                text     = desc,
-                color    = Color(0xCCFFFFFF),
-                fontSize = 15.sp
-            )
-        }
-    }
-}
