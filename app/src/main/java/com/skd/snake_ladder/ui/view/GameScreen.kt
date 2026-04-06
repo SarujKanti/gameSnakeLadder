@@ -209,13 +209,17 @@ fun GameScreen(
                 )
 
                 // Snake / Ladder event overlay
-                AnimatedVisibility(
-                    visible = state.lastEvent != null,
-                    enter   = fadeIn(tween(250)) + scaleIn(tween(250), initialScale = 0.80f),
-                    exit    = fadeOut(tween(300)) + scaleOut(tween(300), targetScale = 0.80f),
-                    modifier = Modifier.align(Alignment.Center)
+                Box(
+                    modifier = Modifier.matchParentSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    EventOverlay(isSnake = isSnakeEvent)
+                    AnimatedVisibility(
+                        visible = state.lastEvent != null,
+                        enter   = fadeIn(tween(250)) + scaleIn(tween(250), initialScale = 0.80f),
+                        exit    = fadeOut(tween(300)) + scaleOut(tween(300), targetScale = 0.80f)
+                    ) {
+                        EventOverlay(isSnake = isSnakeEvent)
+                    }
                 }
             }
 
