@@ -185,42 +185,16 @@ fun GameScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             // ── Wooden board frame + board + event overlay ─────────────────
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(10.dp, RoundedCornerShape(14.dp))
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(
-                        Brush.linearGradient(
-                            listOf(BoardFrameLight, BoardFrame, BoardFrameLight)
-                        )
-                    )
-                    .padding(10.dp)
-            ) {
-                // Board
-                BoardCanvas(
-                    playerPositions  = listOf(
-                        Pair(state.playerPosition,  PlayerBlue),
-                        Pair(state.opponentPosition, PlayerPink)
-                    ),
-                    activeSnakeFrom  = activeSnakeFrom,
-                    activeLadderFrom = activeLadderFrom
-                )
-
-                // Snake / Ladder event overlay
-                Box(
-                    modifier = Modifier.matchParentSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    AnimatedVisibility(
-                        visible = state.lastEvent != null,
-                        enter   = fadeIn(tween(300)),
-                        exit    = fadeOut(tween(300))
-                    ) {
-                        EventOverlay(isSnake = isSnakeEvent)
-                    }
-                }
-            }
+            BoardWithOverlay(
+                playerPositions  = listOf(
+                    Pair(state.playerPosition,  PlayerBlue),
+                    Pair(state.opponentPosition, PlayerPink)
+                ),
+                activeSnakeFrom  = activeSnakeFrom,
+                activeLadderFrom = activeLadderFrom,
+                showOverlay      = state.lastEvent != null,
+                isSnakeEvent     = isSnakeEvent
+            )
 
             Spacer(modifier = Modifier.height(18.dp))
 
@@ -268,6 +242,47 @@ fun GameScreen(
                 },
                 shape = RoundedCornerShape(20.dp)
             )
+        }
+    }
+}
+
+// ── Board frame + canvas + overlay (extracted so AnimatedVisibility is NOT
+//    inside a ColumnScope, which would pick the wrong overload) ──────────────
+@Composable
+private fun BoardWithOverlay(
+    playerPositions: List<Pair<Int, Color>>,
+    activeSnakeFrom: Int?,
+    activeLadderFrom: Int?,
+    showOverlay: Boolean,
+    isSnakeEvent: Boolean
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(10.dp, RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                Brush.linearGradient(listOf(BoardFrameLight, BoardFrame, BoardFrameLight))
+            )
+            .padding(10.dp)
+    ) {
+        BoardCanvas(
+            playerPositions  = playerPositions,
+            activeSnakeFrom  = activeSnakeFrom,
+            activeLadderFrom = activeLadderFrom
+        )
+
+        Box(
+            modifier         = Modifier.matchParentSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            AnimatedVisibility(
+                visible = showOverlay,
+                enter   = fadeIn(tween(300)),
+                exit    = fadeOut(tween(300))
+            ) {
+                EventOverlay(isSnake = isSnakeEvent)
+            }
         }
     }
 }
