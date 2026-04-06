@@ -98,10 +98,11 @@ fun GameScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                val cdBack = stringResource(R.string.cd_back)
                 TextButton(
                     onClick = onBack,
                     modifier = Modifier.semantics {
-                        contentDescription = stringResource(R.string.cd_back)
+                        contentDescription = cdBack
                     }
                 ) {
                     Text(
