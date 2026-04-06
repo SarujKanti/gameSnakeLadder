@@ -8,12 +8,12 @@ object SnakeLadderConfig {
         95 to 72,
         70 to 55,
         52 to 42,
-        25 to 2
+        23 to 2
     )
 
     // for ladder start / end point
     val ladders = mapOf(
-        6 to 25,
+        6 to 24,
         11 to 40,
         17 to 69,
         46 to 90,
