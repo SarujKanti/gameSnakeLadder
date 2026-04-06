@@ -25,4 +25,10 @@
     <string name="cd_dice">Dice showing %d</string>
     <string name="cd_roll_dice">Roll the dice</string>
     <string name="cd_back">Go back to menu</string>
+    <string name="snake_event">Snake!</string>
+    <string name="snake_slide">Sliding down&#8230;</string>
+    <string name="ladder_event">Ladder!</string>
+    <string name="ladder_climb">Climbing up!</string>
+    <string name="position_label">POS</string>
+    <string name="your_turn_badge">YOUR TURN</string>
 </resources>

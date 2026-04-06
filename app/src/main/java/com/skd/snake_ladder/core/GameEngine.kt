@@ -19,7 +19,8 @@ class GameEngine {
         return newPosition
     }
 
-    fun checkWinner(position: Int): Boolean {
-        return position == 100
-    }
+    fun checkWinner(position: Int): Boolean = position == 100
+
+    fun isSnakePosition(position: Int): Boolean = SnakeLadderConfig.snakes.containsKey(position)
+    fun isLadderPosition(position: Int): Boolean = SnakeLadderConfig.ladders.containsKey(position)
 }
