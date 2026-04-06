@@ -5,8 +5,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -215,8 +213,8 @@ fun GameScreen(
                 ) {
                     AnimatedVisibility(
                         visible = state.lastEvent != null,
-                        enter   = fadeIn(tween(250)) + scaleIn(tween(250), initialScale = 0.80f),
-                        exit    = fadeOut(tween(300)) + scaleOut(tween(300), targetScale = 0.80f)
+                        enter   = fadeIn(tween(300)),
+                        exit    = fadeOut(tween(300))
                     ) {
                         EventOverlay(isSnake = isSnakeEvent)
                     }
@@ -278,8 +276,8 @@ fun GameScreen(
 private fun EventOverlay(isSnake: Boolean) {
     val bg    = if (isSnake) Color(0xEED32F2F) else Color(0xEE2E7D32)
     val icon  = if (isSnake) "🐍" else "🪜"
-    val title = if (isSnake) stringResource(R.string.snake_event)  else stringResource(R.string.ladder_event)
-    val desc  = if (isSnake) stringResource(R.string.snake_slide)  else stringResource(R.string.ladder_climb)
+    val title = if (isSnake) "Snake!" else "Ladder!"
+    val desc  = if (isSnake) "Sliding down\u2026" else "Climbing up!"
 
     Box(
         modifier = Modifier
