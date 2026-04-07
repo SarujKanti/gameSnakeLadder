@@ -6,8 +6,8 @@ object SnakeLadderConfig {
     val snakes = mapOf(
         99 to 54,
         95 to 72,
-        70 to 55,
-        52 to 42,
+        58 to 29,
+        52 to 21,
         23 to 2
     )
 
@@ -16,7 +16,7 @@ object SnakeLadderConfig {
         6 to 24,
         11 to 40,
         17 to 69,
-        46 to 90,
+        32 to 74,
         60 to 85
     )
 }
