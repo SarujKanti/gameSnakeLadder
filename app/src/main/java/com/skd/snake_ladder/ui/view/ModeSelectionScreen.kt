@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,8 +39,7 @@ internal val PLAYER_COLORS = listOf(
     Color(0xFF00695C), // 6 – teal
 )
 
-private val BgTop    = Color(0xFF0D1B2A)   // matches GameScreen
-private val BgBottom = Color(0xFF0D2137)
+private val AppBg = Color(0xFF141C2E)
 
 @Composable
 fun ModeSelectionScreen(
@@ -53,7 +51,7 @@ fun ModeSelectionScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(BgTop, BgBottom)))
+            .background(AppBg)
     ) {
         Column(
             modifier = Modifier
@@ -118,7 +116,7 @@ fun ModeSelectionScreen(
                     .fillMaxWidth()
                     .shadow(6.dp, RoundedCornerShape(18.dp))
                     .clip(RoundedCornerShape(18.dp))
-                    .background(Color(0xFF162840))
+                    .background(Color(0xFF1E2A40))
             ) {
                 // Header row — tap to expand / collapse
                 Row(

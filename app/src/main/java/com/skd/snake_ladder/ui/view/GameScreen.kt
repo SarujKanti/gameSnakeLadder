@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -15,6 +16,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+
+private val AppBg = Color(0xFF141C2E)
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -28,8 +31,6 @@ import com.skd.snake_ladder.domain.model.GameEvent
 import com.skd.snake_ladder.domain.model.GameMode
 import com.skd.snake_ladder.viewmodel.GameViewModel
 
-private val BgTop           = Color(0xFF0D1B2A)
-private val BgBottom        = Color(0xFF1B3A5C)
 private val BoardFrame      = Color(0xFF4E2B00)
 private val BoardFrameLight = Color(0xFF7B4A1A)
 
@@ -83,7 +84,7 @@ fun GameScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(BgTop, BgBottom)))
+            .background(AppBg)
     ) {
         Column(
             modifier = Modifier

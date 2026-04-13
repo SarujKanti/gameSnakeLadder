@@ -38,7 +38,7 @@ fun ProfileSection(
         label = "border"
     )
     val bgColor by animateColorAsState(
-        targetValue = if (isActive) Color(0xFF1A237E) else Color(0xFF2D3748),
+        targetValue = if (isActive) Color(0xFF1A237E) else Color(0xFF1E2A40),
         animationSpec = tween(400),
         label = "bg"
     )
