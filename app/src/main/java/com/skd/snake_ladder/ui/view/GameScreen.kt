@@ -16,8 +16,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-
-private val AppBg = Color(0xFF141C2E)
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -31,6 +29,7 @@ import com.skd.snake_ladder.domain.model.GameEvent
 import com.skd.snake_ladder.domain.model.GameMode
 import com.skd.snake_ladder.viewmodel.GameViewModel
 
+private val AppBg           = Color(0xFF141C2E)
 private val BoardFrame      = Color(0xFF4E2B00)
 private val BoardFrameLight = Color(0xFF7B4A1A)
 
