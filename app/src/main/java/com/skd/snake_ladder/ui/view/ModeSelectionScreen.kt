@@ -40,8 +40,8 @@ internal val PLAYER_COLORS = listOf(
     Color(0xFF00695C), // 6 – teal
 )
 
-private val BgTop    = Color(0xFF0D1B2A)
-private val BgBottom = Color(0xFF1B3A5C)
+private val BgTop    = Color(0xFF0D1B2A)   // matches GameScreen
+private val BgBottom = Color(0xFF0D2137)
 
 @Composable
 fun ModeSelectionScreen(
@@ -118,7 +118,7 @@ fun ModeSelectionScreen(
                     .fillMaxWidth()
                     .shadow(6.dp, RoundedCornerShape(18.dp))
                     .clip(RoundedCornerShape(18.dp))
-                    .background(Color(0xFF1B3A5C))
+                    .background(Color(0xFF162840))
             ) {
                 // Header row — tap to expand / collapse
                 Row(

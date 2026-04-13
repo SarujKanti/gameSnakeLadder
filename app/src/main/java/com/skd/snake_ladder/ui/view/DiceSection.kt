@@ -79,8 +79,8 @@ fun DiceSection(
 
         Canvas(
             modifier = Modifier
-                .size(108.dp)
-                .shadow(elevation, RoundedCornerShape(22.dp), clip = false)
+                .size(72.dp)
+                .shadow(elevation, RoundedCornerShape(16.dp), clip = false)
                 .graphicsLayer {
                     rotationZ = rotation
                     scaleX    = scale
@@ -169,7 +169,7 @@ fun DiceSection(
             },
             fontSize   = 15.sp,
             fontWeight = FontWeight.Medium,
-            color      = Color(0xFF455A64)
+            color      = Color(0xFF90CAF9)
         )
     }
 }
