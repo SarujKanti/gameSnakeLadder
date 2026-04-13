@@ -2,7 +2,6 @@ package com.skd.snake_ladder.ui.view
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -43,34 +42,29 @@ fun GameScreen(
 
     BackHandler { onBack() }
 
-    // ── Turn text ─────────────────────────────────────────────────────────
+    // ── Derived state ──────────────────────────────────────────────────────
     val turnText = when {
         state.winner != null -> stringResource(R.string.game_over)
         state.isRolling      -> stringResource(R.string.rolling)
-        state.gameMode == GameMode.VS_COMPUTER -> {
+        state.gameMode == GameMode.VS_COMPUTER ->
             if (state.isPlayerTurn) stringResource(R.string.your_turn)
             else                    stringResource(R.string.computer_turn)
-        }
         else -> "Player ${state.currentPlayerIndex + 1}'s Turn"
     }
 
-    // ── Dice enabled ─────────────────────────────────────────────────────
     val isDiceEnabled = !state.isRolling &&
             state.winner == null &&
             (state.gameMode != GameMode.VS_COMPUTER || state.isPlayerTurn)
 
-    // ── Chip colour ────────────────────────────────────────────────────
     val chipColor = when {
         state.winner != null -> Color(0xFFF9A825)
         state.isRolling      -> Color(0xFF546E7A)
         else -> PLAYER_COLORS.getOrElse(state.currentPlayerIndex) { Color(0xFF1565C0) }
     }
 
-    // ── Board highlights ──────────────────────────────────────────────
     val activeSnakeFrom  = if (state.lastEvent == GameEvent.SNAKE)  state.lastEventPosition else null
     val activeLadderFrom = if (state.lastEvent == GameEvent.LADDER) state.lastEventPosition else null
 
-    // ── Player names ──────────────────────────────────────────────────
     val playerNames: List<String> = List(state.playerCount) { idx ->
         when {
             state.gameMode == GameMode.VS_COMPUTER && idx == 0 -> stringResource(R.string.player)
@@ -79,6 +73,13 @@ fun GameScreen(
         }
     }
 
+    // Split players into top / bottom halves (ceil/floor of N/2)
+    // 2→1+1  3→2+1  4→2+2  5→3+2  6→3+3
+    val topCount    = (state.playerCount + 1) / 2
+    val topIndices    = (0 until topCount)
+    val bottomIndices = (topCount until state.playerCount)
+
+    // ── Layout ────────────────────────────────────────────────────────────
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -91,6 +92,7 @@ fun GameScreen(
                 .padding(horizontal = 14.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
             // ── Top bar ───────────────────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -99,13 +101,13 @@ fun GameScreen(
             ) {
                 val cdBack = stringResource(R.string.cd_back)
                 TextButton(
-                    onClick = onBack,
+                    onClick  = onBack,
                     modifier = Modifier.semantics { contentDescription = cdBack }
                 ) {
                     Text(
-                        text      = "← ${stringResource(R.string.back_to_menu)}",
-                        fontSize  = 13.sp,
-                        color     = Color(0xFF90CAF9)
+                        text     = "← ${stringResource(R.string.back_to_menu)}",
+                        fontSize = 13.sp,
+                        color    = Color(0xFF90CAF9)
                     )
                 }
                 Text(
@@ -119,10 +121,10 @@ fun GameScreen(
 
             // ── Turn chip ─────────────────────────────────────────────────
             Surface(
-                shape          = RoundedCornerShape(20.dp),
-                color          = chipColor,
+                shape           = RoundedCornerShape(20.dp),
+                color           = chipColor,
                 shadowElevation = 4.dp,
-                modifier       = Modifier.padding(vertical = 6.dp)
+                modifier        = Modifier.padding(vertical = 4.dp)
             ) {
                 Text(
                     text       = turnText,
@@ -133,42 +135,16 @@ fun GameScreen(
                 )
             }
 
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // ── Top player row ────────────────────────────────────────────
+            PlayerRow(
+                indices      = topIndices,
+                state        = state,
+                playerNames  = playerNames
+            )
+
             Spacer(modifier = Modifier.height(6.dp))
-
-            // ── Player profile cards ─────────────────────────────────────
-            if (state.playerCount <= 3) {
-                // Equal-width cards — no scroll needed
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    state.positions.forEachIndexed { idx, pos ->
-                        ProfileSection(
-                            name       = playerNames.getOrElse(idx) { "P${idx + 1}" },
-                            position   = pos,
-                            isActive   = state.currentPlayerIndex == idx && state.winner == null,
-                            tokenColor = PLAYER_COLORS.getOrElse(idx) { Color.Gray },
-                            modifier   = Modifier.weight(1f)
-                        )
-                    }
-                }
-            } else {
-                // 4-6 players: fixed-width scrollable row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
-                ) {
-                    state.positions.forEachIndexed { idx, pos ->
-                        ProfileSection(
-                            name       = playerNames.getOrElse(idx) { "P${idx + 1}" },
-                            position   = pos,
-                            isActive   = state.currentPlayerIndex == idx && state.winner == null,
-                            tokenColor = PLAYER_COLORS.getOrElse(idx) { Color.Gray },
-                            modifier   = Modifier.width(86.dp)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
 
             // ── Board ─────────────────────────────────────────────────────
             BoardWithOverlay(
@@ -179,7 +155,17 @@ fun GameScreen(
                 activeLadderFrom = activeLadderFrom
             )
 
-            Spacer(modifier = Modifier.height(18.dp))
+            // ── Bottom player row ─────────────────────────────────────────
+            if (bottomIndices.any()) {
+                Spacer(modifier = Modifier.height(6.dp))
+                PlayerRow(
+                    indices     = bottomIndices,
+                    state       = state,
+                    playerNames = playerNames
+                )
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
 
             // ── Dice ──────────────────────────────────────────────────────
             DiceSection(
@@ -189,7 +175,7 @@ fun GameScreen(
                 onRoll    = { viewModel.rollDice() }
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
         // ── Winner dialog ─────────────────────────────────────────────────
@@ -200,14 +186,10 @@ fun GameScreen(
                     Button(
                         onClick = { viewModel.restartGame() },
                         colors  = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
-                    ) {
-                        Text(stringResource(R.string.play_again))
-                    }
+                    ) { Text(stringResource(R.string.play_again)) }
                 },
                 dismissButton = {
-                    TextButton(onClick = onBack) {
-                        Text(stringResource(R.string.back_to_menu))
-                    }
+                    TextButton(onClick = onBack) { Text(stringResource(R.string.back_to_menu)) }
                 },
                 title = {
                     Text(
@@ -224,6 +206,26 @@ fun GameScreen(
                     )
                 },
                 shape = RoundedCornerShape(20.dp)
+            )
+        }
+    }
+}
+
+// ── Equal-width player card row ───────────────────────────────────────────────
+@Composable
+private fun PlayerRow(
+    indices: IntRange,
+    state: com.skd.snake_ladder.domain.model.GameState,
+    playerNames: List<String>
+) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        indices.forEach { idx ->
+            ProfileSection(
+                name       = playerNames.getOrElse(idx) { "P${idx + 1}" },
+                position   = state.positions.getOrElse(idx) { 0 },
+                isActive   = state.currentPlayerIndex == idx && state.winner == null,
+                tokenColor = PLAYER_COLORS.getOrElse(idx) { Color.Gray },
+                modifier   = Modifier.weight(1f)
             )
         }
     }
