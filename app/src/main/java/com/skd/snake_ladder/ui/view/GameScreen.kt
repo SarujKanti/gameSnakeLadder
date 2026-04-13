@@ -54,7 +54,8 @@ fun GameScreen(
 
     val isDiceEnabled = !state.isRolling &&
             state.winner == null &&
-            (state.gameMode != GameMode.VS_COMPUTER || state.isPlayerTurn)
+            (state.gameMode != GameMode.VS_COMPUTER || state.isPlayerTurn) &&
+            state.currentPlayerIndex !in state.eliminatedPlayers
 
     val chipColor = when {
         state.winner != null -> Color(0xFFF9A825)
@@ -218,15 +219,26 @@ private fun PlayerRow(
     state: com.skd.snake_ladder.domain.model.GameState,
     playerNames: List<String>
 ) {
+    // Pad shorter rows so all rows have the same card size (topCount = max per row)
+    val maxPerRow = (state.playerCount + 1) / 2
     Row(modifier = Modifier.fillMaxWidth()) {
+        var slot = 0
         indices.forEach { idx ->
             ProfileSection(
-                name       = playerNames.getOrElse(idx) { "P${idx + 1}" },
-                position   = state.positions.getOrElse(idx) { 0 },
-                isActive   = state.currentPlayerIndex == idx && state.winner == null,
-                tokenColor = PLAYER_COLORS.getOrElse(idx) { Color.Gray },
-                modifier   = Modifier.weight(1f)
+                name          = playerNames.getOrElse(idx) { "P${idx + 1}" },
+                position      = state.positions.getOrElse(idx) { 0 },
+                isActive      = state.currentPlayerIndex == idx && state.winner == null,
+                tokenColor    = PLAYER_COLORS.getOrElse(idx) { Color.Gray },
+                timeRemaining = if (state.currentPlayerIndex == idx) state.timeRemaining else 30,
+                skipsUsed     = state.skipCounts.getOrElse(idx) { 0 },
+                isEliminated  = idx in state.eliminatedPlayers,
+                modifier      = Modifier.weight(1f)
             )
+            slot++
+        }
+        // Fill remaining slots with invisible spacers so all rows share card width
+        repeat(maxPerRow - slot) {
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 }
