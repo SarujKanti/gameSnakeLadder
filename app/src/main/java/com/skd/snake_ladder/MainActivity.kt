@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
             ) {
                 if (state.gameMode == null) {
                     ModeSelectionScreen(
-                        onModeSelected = { mode, count -> viewModel.setGameMode(mode, count) }
+                        onModeSelected = { mode, count, names -> viewModel.setGameMode(mode, count, names) }
                     )
                 } else {
                     BackHandler {

@@ -74,7 +74,9 @@ fun GameScreen(
     val activeLadderFrom = if (state.lastEvent == GameEvent.LADDER) state.lastEventPosition else null
 
     val playerNames: List<String> = List(state.playerCount) { idx ->
+        val custom = state.playerNames.getOrNull(idx)?.trim()
         when {
+            !custom.isNullOrBlank()                            -> custom
             state.gameMode == GameMode.VS_COMPUTER && idx == 0 -> stringResource(R.string.player)
             state.gameMode == GameMode.VS_COMPUTER             -> stringResource(R.string.computer)
             else -> "P${idx + 1}"

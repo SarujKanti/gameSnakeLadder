@@ -30,7 +30,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun rollDice() = rollDiceInternal(computerInitiated = false)
 
-    fun setGameMode(mode: GameMode, playerCount: Int = 2) {
+    fun setGameMode(mode: GameMode, playerCount: Int = 2, playerNames: List<String> = emptyList()) {
         val count = playerCount.coerceIn(2, 6)
         _state.value = GameState(
             gameMode          = mode,
@@ -38,7 +38,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             positions         = List(count) { 0 },
             skipCounts        = List(count) { 0 },
             eliminatedPlayers = emptySet(),
-            timeRemaining     = 30
+            timeRemaining     = 30,
+            playerNames       = playerNames.map { it.trim() }
         )
         startTurnTimer()
     }
@@ -52,7 +53,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             positions         = List(cur.playerCount) { 0 },
             skipCounts        = List(cur.playerCount) { 0 },
             eliminatedPlayers = emptySet(),
-            timeRemaining     = 30
+            timeRemaining     = 30,
+            playerNames       = cur.playerNames
         )
         startTurnTimer()
     }
@@ -229,10 +231,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun playerNameFor(state: GameState, idx: Int): String = when {
-        state.gameMode == GameMode.VS_COMPUTER && idx == 0 -> "Player"
-        state.gameMode == GameMode.VS_COMPUTER             -> "Computer"
-        else -> "Player ${idx + 1}"
+    private fun playerNameFor(state: GameState, idx: Int): String {
+        val custom = state.playerNames.getOrNull(idx)?.trim()
+        if (!custom.isNullOrBlank()) return custom
+        return when {
+            state.gameMode == GameMode.VS_COMPUTER && idx == 0 -> "Player"
+            state.gameMode == GameMode.VS_COMPUTER             -> "Computer"
+            else -> "P${idx + 1}"
+        }
     }
 
     /** Returns the next non-eliminated player index after [current]. */

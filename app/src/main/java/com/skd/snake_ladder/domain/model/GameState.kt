@@ -20,6 +20,8 @@ data class GameState(
     val eliminatedPlayers: Set<Int> = emptySet(),
     /** Seconds remaining for the current player's turn (counts down from 30). */
     val timeRemaining: Int = 30,
+    /** Custom names entered by players before the game starts. */
+    val playerNames: List<String> = emptyList(),
 ) {
     val isPlayerTurn: Boolean get() = currentPlayerIndex == 0
 }
