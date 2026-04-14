@@ -2,11 +2,12 @@ package com.skd.snake_ladder.ui.view
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,9 +30,16 @@ import com.skd.snake_ladder.domain.model.GameEvent
 import com.skd.snake_ladder.domain.model.GameMode
 import com.skd.snake_ladder.viewmodel.GameViewModel
 
-private val AppBg           = Color(0xFF141C2E)
-private val BoardFrame      = Color(0xFF4E2B00)
-private val BoardFrameLight = Color(0xFF7B4A1A)
+private val BoardFrameGradient = Brush.linearGradient(
+    listOf(
+        Color(0xFF6D4C41),
+        Color(0xFF4E342E),
+        Color(0xFF3E2723),
+        Color(0xFF4E342E),
+        Color(0xFF6D4C41),
+    )
+)
+private val BoardFrameBorder = Color(0xFF8D6E63)
 
 @Composable
 fun GameScreen(
@@ -42,7 +50,6 @@ fun GameScreen(
 
     BackHandler { onBack() }
 
-    // ── Derived state ──────────────────────────────────────────────────────
     val turnText = when {
         state.winner != null -> stringResource(R.string.game_over)
         state.isRolling      -> stringResource(R.string.rolling)
@@ -57,8 +64,8 @@ fun GameScreen(
             (state.gameMode != GameMode.VS_COMPUTER || state.isPlayerTurn) &&
             state.currentPlayerIndex !in state.eliminatedPlayers
 
-    val chipColor = when {
-        state.winner != null -> Color(0xFFF9A825)
+    val chipAccent = when {
+        state.winner != null -> Color(0xFFFFD700)
         state.isRolling      -> Color(0xFF546E7A)
         else -> PLAYER_COLORS.getOrElse(state.currentPlayerIndex) { Color(0xFF1565C0) }
     }
@@ -74,29 +81,28 @@ fun GameScreen(
         }
     }
 
-    // Split players into top / bottom halves (ceil/floor of N/2)
-    // 2→1+1  3→2+1  4→2+2  5→3+2  6→3+3
-    val topCount    = (state.playerCount + 1) / 2
+    val topCount      = (state.playerCount + 1) / 2
     val topIndices    = (0 until topCount)
     val bottomIndices = (topCount until state.playerCount)
 
-    // ── Layout ────────────────────────────────────────────────────────────
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppBg)
+            .background(AppBgGradient)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 14.dp, vertical = 8.dp),
+                .padding(horizontal = 12.dp, vertical = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
             // ── Top bar ───────────────────────────────────────────────────
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -108,44 +114,69 @@ fun GameScreen(
                     Text(
                         text     = "← ${stringResource(R.string.back_to_menu)}",
                         fontSize = 13.sp,
-                        color    = Color(0xFF90CAF9)
+                        color    = Color(0xFF4FC3F7)
                     )
                 }
                 Text(
                     text       = stringResource(R.string.game_title),
-                    fontWeight = FontWeight.Bold,
-                    fontSize   = 18.sp,
-                    color      = Color.White
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize   = 17.sp,
+                    color      = Color(0xFFECEFF1)
                 )
                 Spacer(modifier = Modifier.width(88.dp))
             }
 
+            // Subtle header separator
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color.Transparent, Color(0x22FFFFFF), Color.Transparent)
+                        )
+                    )
+            )
+
+            Spacer(Modifier.height(8.dp))
+
             // ── Turn chip ─────────────────────────────────────────────────
-            Surface(
-                shape           = RoundedCornerShape(20.dp),
-                color           = chipColor,
-                shadowElevation = 4.dp,
-                modifier        = Modifier.padding(vertical = 4.dp)
+            Box(
+                modifier = Modifier
+                    .shadow(8.dp, RoundedCornerShape(24.dp))
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(chipAccent.copy(alpha = 0.12f))
+                    .border(1.5.dp, chipAccent.copy(alpha = 0.55f), RoundedCornerShape(24.dp))
+                    .padding(horizontal = 20.dp, vertical = 7.dp)
             ) {
-                Text(
-                    text       = turnText,
-                    modifier   = Modifier.padding(horizontal = 22.dp, vertical = 7.dp),
-                    color      = Color.White,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize   = 14.sp
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .background(chipAccent, CircleShape)
+                    )
+                    Text(
+                        text       = turnText,
+                        color      = chipAccent,
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 13.sp
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(Modifier.height(8.dp))
 
             // ── Top player row ────────────────────────────────────────────
             PlayerRow(
-                indices      = topIndices,
-                state        = state,
-                playerNames  = playerNames
+                indices     = topIndices,
+                state       = state,
+                playerNames = playerNames
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(Modifier.height(8.dp))
 
             // ── Board ─────────────────────────────────────────────────────
             BoardWithOverlay(
@@ -158,7 +189,7 @@ fun GameScreen(
 
             // ── Bottom player row ─────────────────────────────────────────
             if (bottomIndices.any()) {
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(Modifier.height(8.dp))
                 PlayerRow(
                     indices     = bottomIndices,
                     state       = state,
@@ -166,7 +197,7 @@ fun GameScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(Modifier.height(16.dp))
 
             // ── Dice ──────────────────────────────────────────────────────
             DiceSection(
@@ -176,7 +207,7 @@ fun GameScreen(
                 onRoll    = { viewModel.rollDice() }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(20.dp))
         }
 
         // ── Winner dialog ─────────────────────────────────────────────────
@@ -186,27 +217,50 @@ fun GameScreen(
                 confirmButton = {
                     Button(
                         onClick = { viewModel.restartGame() },
-                        colors  = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
-                    ) { Text(stringResource(R.string.play_again)) }
+                        shape   = RoundedCornerShape(10.dp),
+                        colors  = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1565C0)
+                        )
+                    ) {
+                        Text(
+                            text       = stringResource(R.string.play_again),
+                            fontWeight = FontWeight.Bold,
+                            fontSize   = 14.sp
+                        )
+                    }
                 },
                 dismissButton = {
-                    TextButton(onClick = onBack) { Text(stringResource(R.string.back_to_menu)) }
+                    TextButton(onClick = onBack) {
+                        Text(
+                            text  = stringResource(R.string.back_to_menu),
+                            color = Color(0xFF4FC3F7)
+                        )
+                    }
                 },
                 title = {
-                    Text(
-                        text       = stringResource(R.string.game_over),
-                        fontWeight = FontWeight.Bold,
-                        fontSize   = 22.sp
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("🏆", fontSize = 40.sp)
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text       = stringResource(R.string.game_over),
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize   = 20.sp,
+                            color      = Color(0xFFFFD700)
+                        )
+                    }
                 },
                 text = {
                     Text(
                         text      = stringResource(R.string.winner_message, state.winner ?: ""),
-                        fontSize  = 18.sp,
-                        textAlign = TextAlign.Center
+                        fontSize  = 16.sp,
+                        textAlign = TextAlign.Center,
+                        color     = Color(0xFFECEFF1)
                     )
                 },
-                shape = RoundedCornerShape(20.dp)
+                shape             = RoundedCornerShape(24.dp),
+                containerColor    = Color(0xFF111C33),
+                titleContentColor = Color.White,
+                textContentColor  = Color(0xFFB0BEC5)
             )
         }
     }
@@ -219,7 +273,6 @@ private fun PlayerRow(
     state: com.skd.snake_ladder.domain.model.GameState,
     playerNames: List<String>
 ) {
-    // Pad shorter rows so all rows have the same card size (topCount = max per row)
     val maxPerRow = (state.playerCount + 1) / 2
     Row(modifier = Modifier.fillMaxWidth()) {
         var slot = 0
@@ -236,7 +289,6 @@ private fun PlayerRow(
             )
             slot++
         }
-        // Fill remaining slots with invisible spacers so all rows share card width
         repeat(maxPerRow - slot) {
             Spacer(modifier = Modifier.weight(1f))
         }
@@ -253,9 +305,10 @@ private fun BoardWithOverlay(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(10.dp, RoundedCornerShape(14.dp))
-            .clip(RoundedCornerShape(14.dp))
-            .background(Brush.linearGradient(listOf(BoardFrameLight, BoardFrame, BoardFrameLight)))
+            .shadow(14.dp, RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .background(BoardFrameGradient)
+            .border(1.5.dp, BoardFrameBorder, RoundedCornerShape(16.dp))
             .padding(10.dp)
     ) {
         BoardCanvas(
