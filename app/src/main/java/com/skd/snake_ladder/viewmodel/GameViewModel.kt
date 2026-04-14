@@ -22,7 +22,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application), G
     private val soundManager = SoundManager(application)
 
     private val _state = MutableStateFlow(GameState())
-    val state: StateFlow<GameState> = _state
+    override val state: StateFlow<GameState> = _state
 
     private var timerJob: Job? = null
 
@@ -31,7 +31,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application), G
 
     // ── Public API ────────────────────────────────────────────────────────
 
-    fun rollDice() = rollDiceInternal(computerInitiated = false)
+    override fun rollDice() = rollDiceInternal(computerInitiated = false)
 
     fun setGameMode(mode: GameMode, playerCount: Int = 2, playerNames: List<String> = emptyList()) {
         savedMultiplayerState = null          // starting fresh always clears the cache
@@ -48,7 +48,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application), G
         startTurnTimer()
     }
 
-    fun restartGame() {
+    override fun restartGame() {
         timerJob?.cancel()
         val cur = _state.value
         _state.value = GameState(

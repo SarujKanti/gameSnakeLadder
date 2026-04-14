@@ -9,7 +9,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.skd.snake_ladder"
+        applicationId = "skd.snake_ladder"
         minSdk = 21
         targetSdk = 34
         versionCode = 1
