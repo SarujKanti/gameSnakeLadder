@@ -55,7 +55,8 @@ internal val AppBgGradient = Brush.verticalGradient(
 fun ModeSelectionScreen(
     onModeSelected: (GameMode, Int, List<String>) -> Unit,
     hasSavedGameForCount: (Int) -> Boolean = { false },
-    onResumeSavedGame: () -> Unit = {}
+    onResumeSavedGame: () -> Unit = {},
+    onPlayOnline: () -> Unit = {}
 ) {
     var multiExpanded by remember { mutableStateOf(false) }
     var selectedCount by remember { mutableStateOf(2) }
@@ -383,6 +384,52 @@ fun ModeSelectionScreen(
                             }
                         }
                     }
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // ── Play Online card ──────────────────────────────────────────
+            ModeCard(onClick = onPlayOnline) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 18.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(46.dp)
+                            .background(
+                                Brush.linearGradient(
+                                    listOf(Color(0xFF00695C), Color(0xFF004D40))
+                                ),
+                                RoundedCornerShape(12.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("🌐", fontSize = 22.sp)
+                    }
+                    Spacer(Modifier.width(14.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text       = "Play Online",
+                            fontSize   = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color      = Color(0xFFECEFF1)
+                        )
+                        Text(
+                            text     = "Create or join a room",
+                            fontSize = 13.sp,
+                            color    = Color(0xFF546E7A)
+                        )
+                    }
+                    Text(
+                        text       = "›",
+                        fontSize   = 22.sp,
+                        color      = Color(0xFF4FC3F7),
+                        fontWeight = FontWeight.Light
+                    )
                 }
             }
 

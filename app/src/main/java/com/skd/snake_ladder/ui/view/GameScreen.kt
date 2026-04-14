@@ -28,7 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.skd.snake_ladder.R
 import com.skd.snake_ladder.domain.model.GameEvent
 import com.skd.snake_ladder.domain.model.GameMode
-import com.skd.snake_ladder.viewmodel.GameViewModel
+import com.skd.snake_ladder.viewmodel.GameController
 
 private val BoardFrameGradient = Brush.linearGradient(
     listOf(
@@ -43,10 +43,10 @@ private val BoardFrameBorder = Color(0xFF8D6E63)
 
 @Composable
 fun GameScreen(
-    viewModel: GameViewModel,
+    controller: GameController,
     onBack: () -> Unit = {}
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by controller.state.collectAsStateWithLifecycle()
 
     BackHandler { onBack() }
 
@@ -56,12 +56,26 @@ fun GameScreen(
         state.gameMode == GameMode.VS_COMPUTER ->
             if (state.isPlayerTurn) stringResource(R.string.your_turn)
             else                    stringResource(R.string.computer_turn)
-        else -> "Player ${state.currentPlayerIndex + 1}'s Turn"
+        state.gameMode == GameMode.ONLINE ->
+            if (state.isPlayerTurn) "Your Turn"
+            else {
+                val name = state.playerNames.getOrNull(state.currentPlayerIndex)
+                    ?.trim()?.takeIf { it.isNotBlank() }
+                    ?: "Player ${state.currentPlayerIndex + 1}"
+                "$name's Turn"
+            }
+        else -> {
+            val name = state.playerNames.getOrNull(state.currentPlayerIndex)
+                ?.trim()?.takeIf { it.isNotBlank() }
+                ?: "Player ${state.currentPlayerIndex + 1}"
+            "$name's Turn"
+        }
     }
 
     val isDiceEnabled = !state.isRolling &&
             state.winner == null &&
             (state.gameMode != GameMode.VS_COMPUTER || state.isPlayerTurn) &&
+            (state.gameMode != GameMode.ONLINE || state.isPlayerTurn) &&
             state.currentPlayerIndex !in state.eliminatedPlayers
 
     val chipAccent = when {
@@ -206,7 +220,7 @@ fun GameScreen(
                 diceValue = state.diceValue,
                 isRolling = state.isRolling,
                 isEnabled = isDiceEnabled,
-                onRoll    = { viewModel.rollDice() }
+                onRoll    = { controller.rollDice() }
             )
 
             Spacer(Modifier.height(20.dp))
@@ -218,7 +232,7 @@ fun GameScreen(
                 onDismissRequest = {},
                 confirmButton = {
                     Button(
-                        onClick = { viewModel.restartGame() },
+                        onClick = { controller.restartGame() },
                         shape   = RoundedCornerShape(10.dp),
                         colors  = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF1565C0)

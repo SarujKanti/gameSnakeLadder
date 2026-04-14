@@ -15,14 +15,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class GameViewModel(application: Application) : AndroidViewModel(application) {
+class GameViewModel(application: Application) : AndroidViewModel(application), GameController {
 
     private val engine       = GameEngine()
     private val diceUseCase  = RollDiceUseCase()
     private val soundManager = SoundManager(application)
 
     private val _state = MutableStateFlow(GameState())
-    val state: StateFlow<GameState> = _state
+    override val state: StateFlow<GameState> = _state
 
     private var timerJob: Job? = null
 
@@ -31,7 +31,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     // ── Public API ────────────────────────────────────────────────────────
 
-    fun rollDice() = rollDiceInternal(computerInitiated = false)
+    override fun rollDice() = rollDiceInternal(computerInitiated = false)
 
     fun setGameMode(mode: GameMode, playerCount: Int = 2, playerNames: List<String> = emptyList()) {
         savedMultiplayerState = null          // starting fresh always clears the cache
@@ -48,7 +48,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         startTurnTimer()
     }
 
-    fun restartGame() {
+    override fun restartGame() {
         timerJob?.cancel()
         val cur = _state.value
         _state.value = GameState(
