@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,10 +53,12 @@ internal val AppBgGradient = Brush.verticalGradient(
 
 @Composable
 fun ModeSelectionScreen(
-    onModeSelected: (GameMode, Int) -> Unit
+    onModeSelected: (GameMode, Int, List<String>) -> Unit
 ) {
     var multiExpanded by remember { mutableStateOf(false) }
     var selectedCount by remember { mutableStateOf(2) }
+    // Persistent name inputs for up to 6 players (indices 0–5)
+    val nameInputs = remember { mutableStateListOf("", "", "", "", "", "") }
 
     Box(
         modifier = Modifier
@@ -153,7 +157,7 @@ fun ModeSelectionScreen(
 
             // ── VS Computer card ──────────────────────────────────────────
             ModeCard(
-                onClick = { onModeSelected(GameMode.VS_COMPUTER, 2) }
+                onClick = { onModeSelected(GameMode.VS_COMPUTER, 2, emptyList()) }
             ) {
                 Row(
                     modifier = Modifier
@@ -286,21 +290,54 @@ fun ModeSelectionScreen(
                                 }
                             }
 
-                            Spacer(Modifier.height(10.dp))
+                            Spacer(Modifier.height(16.dp))
 
-                            // Player colour preview dots
-                            Row(
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment     = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth()
+                            // Name input fields — one per selected player
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 repeat(selectedCount) { idx ->
-                                    Box(
-                                        modifier = Modifier
-                                            .padding(horizontal = 3.dp)
-                                            .size(10.dp)
-                                            .background(PLAYER_COLORS[idx], CircleShape)
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(10.dp)
+                                                .background(PLAYER_COLORS[idx], CircleShape)
+                                        )
+                                        Spacer(Modifier.width(10.dp))
+                                        OutlinedTextField(
+                                            value         = nameInputs[idx],
+                                            onValueChange = { nameInputs[idx] = it.take(16) },
+                                            placeholder   = {
+                                                Text(
+                                                    "Player ${idx + 1}",
+                                                    fontSize = 13.sp,
+                                                    color    = Color(0xFF37474F)
+                                                )
+                                            },
+                                            singleLine    = true,
+                                            modifier      = Modifier.fillMaxWidth(),
+                                            shape         = RoundedCornerShape(10.dp),
+                                            textStyle     = TextStyle(
+                                                color    = Color(0xFFECEFF1),
+                                                fontSize = 13.sp
+                                            ),
+                                            keyboardOptions = KeyboardOptions(
+                                                imeAction = if (idx < selectedCount - 1)
+                                                    ImeAction.Next else ImeAction.Done
+                                            ),
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedBorderColor      = PLAYER_COLORS[idx],
+                                                unfocusedBorderColor    = Color(0x2AFFFFFF),
+                                                focusedContainerColor   = Color(0x0CFFFFFF),
+                                                unfocusedContainerColor = Color(0x06FFFFFF),
+                                                cursorColor             = PLAYER_COLORS[idx]
+                                            )
+                                        )
+                                    }
                                 }
                             }
 
@@ -318,7 +355,13 @@ fun ModeSelectionScreen(
                                             listOf(Color(0xFF1976D2), Color(0xFF1565C0), Color(0xFF0D47A1))
                                         )
                                     )
-                                    .clickable { onModeSelected(GameMode.MULTI_PLAYER, selectedCount) },
+                                    .clickable {
+                                        onModeSelected(
+                                            GameMode.MULTI_PLAYER,
+                                            selectedCount,
+                                            nameInputs.take(selectedCount)
+                                        )
+                                    },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
