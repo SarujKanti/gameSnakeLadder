@@ -26,11 +26,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private var timerJob: Job? = null
 
+    /** Snapshot saved when user backs out of a multiplayer game in progress. */
+    private var savedMultiplayerState: GameState? = null
+
     // ── Public API ────────────────────────────────────────────────────────
 
     fun rollDice() = rollDiceInternal(computerInitiated = false)
 
     fun setGameMode(mode: GameMode, playerCount: Int = 2, playerNames: List<String> = emptyList()) {
+        savedMultiplayerState = null          // starting fresh always clears the cache
         val count = playerCount.coerceIn(2, 6)
         _state.value = GameState(
             gameMode          = mode,
@@ -59,8 +63,39 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         startTurnTimer()
     }
 
+    /**
+     * Called when the user navigates back to the menu.
+     * Saves the current multiplayer game if it is still in progress.
+     */
+    fun exitToMenu() {
+        timerJob?.cancel()
+        val cur = _state.value
+        if (cur.gameMode == GameMode.MULTI_PLAYER &&
+            cur.winner == null &&
+            cur.positions.any { it > 0 }
+        ) {
+            savedMultiplayerState = cur
+        }
+        _state.value = GameState()
+    }
+
+    /** Returns true if there is a saved multiplayer game with exactly [playerCount] players. */
+    fun hasSavedGameForCount(playerCount: Int): Boolean =
+        savedMultiplayerState?.let {
+            it.playerCount == playerCount && it.winner == null
+        } ?: false
+
+    /** Restores the cached multiplayer game and resumes the turn timer. */
+    fun resumeSavedGame() {
+        val saved = savedMultiplayerState ?: return
+        savedMultiplayerState = null
+        _state.value = saved
+        startTurnTimer()
+    }
+
     fun resetGame() {
         timerJob?.cancel()
+        savedMultiplayerState = null
         _state.value = GameState()
     }
 
