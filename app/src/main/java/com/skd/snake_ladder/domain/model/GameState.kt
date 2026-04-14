@@ -22,6 +22,12 @@ data class GameState(
     val timeRemaining: Int = 30,
     /** Custom names entered by players before the game starts. */
     val playerNames: List<String> = emptyList(),
+    /**
+     * The index that represents "this device's player".
+     * Local modes: always 0. Online: set per device so each player knows whose turn it is.
+     */
+    val myPlayerIndex: Int = 0,
 ) {
-    val isPlayerTurn: Boolean get() = currentPlayerIndex == 0
+    /** True when it is this device's player's turn to act. */
+    val isPlayerTurn: Boolean get() = currentPlayerIndex == myPlayerIndex
 }
