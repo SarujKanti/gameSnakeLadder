@@ -191,6 +191,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             soundManager.playDiceSound()
             delay(300)
 
+            // Guard: user may have exited while the sound/delay was playing
+            if (_state.value.gameMode == null) return@launch
+
             val dice       = diceUseCase.roll()
             val snapshot   = _state.value
             val currentIdx = snapshot.currentPlayerIndex
@@ -213,12 +216,17 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             var tempPos = startPos
             repeat(dice) {
                 delay(250)
+                // Guard: state was reset (e.g. user navigated away) — positions list is now empty
+                if (_state.value.gameMode == null || _state.value.positions.size <= currentIdx) return@repeat
                 tempPos++
                 _state.value = _state.value.copy(
                     positions = _state.value.positions.updatedAt(currentIdx, tempPos),
                     diceValue = dice
                 )
             }
+
+            // Guard after movement loop before snake/ladder check
+            if (_state.value.gameMode == null || _state.value.positions.size <= currentIdx) return@launch
 
             // Snake / Ladder
             val isSnake  = engine.isSnakePosition(tempPos)
@@ -233,10 +241,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 delay(400)
             }
 
+            // Guard after delay before writing final position
+            if (_state.value.gameMode == null || _state.value.positions.size <= currentIdx) return@launch
+
             // Final position
-            val finalPos      = engine.calculateNewPosition(tempPos, 0)
-            val isWinner      = engine.checkWinner(finalPos)
-            val winnerName    = if (isWinner) playerNameFor(snapshot, currentIdx) else null
+            val finalPos   = engine.calculateNewPosition(tempPos, 0)
+            val isWinner   = engine.checkWinner(finalPos)
+            val winnerName = if (isWinner) playerNameFor(snapshot, currentIdx) else null
             if (isWinner) soundManager.playWinSound()
 
             _state.value = _state.value.copy(
