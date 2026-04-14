@@ -2,6 +2,7 @@ package com.skd.snake_ladder.ui.view
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -19,6 +20,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -39,152 +42,194 @@ fun ProfileSection(
 ) {
     val borderColor by animateColorAsState(
         targetValue = when {
-            isEliminated -> Color(0x55EF5350)
+            isEliminated -> Color(0x44EF5350)
             isActive     -> Color(0xFFFFD700)
-            else         -> Color.Transparent
+            else         -> Color(0x18FFFFFF)
         },
         animationSpec = tween(400), label = "border"
     )
-    val bgColor by animateColorAsState(
+
+    val shadowElevation by animateFloatAsState(
         targetValue = when {
-            isEliminated -> Color(0xFF1A0F0F)
-            isActive     -> Color(0xFF1A237E)
-            else         -> Color(0xFF1E2A40)
+            isEliminated -> 0f
+            isActive     -> 14f
+            else         -> 1f
         },
-        animationSpec = tween(400), label = "bg"
+        animationSpec = tween(400), label = "shadow"
     )
 
     val timerColor = when {
-        timeRemaining > 20 -> Color(0xFF4CAF50)
-        timeRemaining > 10 -> Color(0xFFFFA726)
+        timeRemaining > 20 -> Color(0xFF43A047)
+        timeRemaining > 10 -> Color(0xFFFF9800)
         else               -> Color(0xFFEF5350)
     }
 
-    Box(
-        modifier = modifier
-            .padding(4.dp)
-            .border(2.dp, borderColor, RoundedCornerShape(16.dp))
-            .clip(RoundedCornerShape(16.dp))
-            .background(bgColor)
-            .padding(horizontal = 8.dp, vertical = 10.dp)
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
-        ) {
+    val cardBg = when {
+        isEliminated -> Brush.linearGradient(
+            listOf(Color(0xFF1C0E0E), Color(0xFF110A0A))
+        )
+        isActive     -> Brush.linearGradient(
+            listOf(Color(0xFF1C3764), Color(0xFF102244))
+        )
+        else         -> Brush.linearGradient(
+            listOf(Color(0xFF1A2540), Color(0xFF0F1829))
+        )
+    }
 
-            // Token dot + name
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Canvas(modifier = Modifier.size(10.dp)) {
-                    drawCircle(if (isEliminated) Color.Gray else tokenColor)
-                    drawCircle(
-                        Color(0x55FFFFFF),
-                        radius = size.minDimension * 0.22f,
-                        center = center.copy(
-                            x = center.x - size.minDimension * 0.18f,
-                            y = center.y - size.minDimension * 0.18f
+    Box(modifier = modifier.padding(4.dp)) {
+        Box(
+            modifier = Modifier
+                .shadow(
+                    elevation    = shadowElevation.dp,
+                    shape        = RoundedCornerShape(14.dp),
+                    ambientColor = if (isActive && !isEliminated) Color(0xFFFFD700) else Color.Black,
+                    spotColor    = if (isActive && !isEliminated) Color(0xFFFFD700) else Color.Black
+                )
+                .clip(RoundedCornerShape(14.dp))
+                .background(cardBg)
+                .border(1.dp, borderColor, RoundedCornerShape(14.dp))
+                .padding(horizontal = 8.dp, vertical = 8.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+
+                // Token dot + name
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Canvas(modifier = Modifier.size(9.dp)) {
+                        drawCircle(if (isEliminated) Color(0xFF404040) else tokenColor)
+                        drawCircle(
+                            Color(0x66FFFFFF),
+                            radius = size.minDimension * 0.22f,
+                            center = center.copy(
+                                x = center.x - size.minDimension * 0.20f,
+                                y = center.y - size.minDimension * 0.20f
+                            )
                         )
+                    }
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text       = name,
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 12.sp,
+                        color      = if (isEliminated) Color(0xFF4A4A5A) else Color(0xFFECEFF1),
+                        maxLines   = 1
                     )
                 }
-                Spacer(Modifier.width(5.dp))
-                Text(
-                    text       = name,
-                    fontWeight = FontWeight.Bold,
-                    fontSize   = 13.sp,
-                    color      = if (isEliminated) Color(0xFF666666) else Color.White,
-                    maxLines   = 1
-                )
-            }
 
-            Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(4.dp))
 
-            // Position pill
-            Box(
-                modifier = Modifier
-                    .background(Color(0x33FFFFFF), RoundedCornerShape(8.dp))
-                    .padding(horizontal = 10.dp, vertical = 3.dp)
-            ) {
-                Text(
-                    text       = "${stringResource(R.string.position_label)} $position",
-                    color      = if (isEliminated) Color(0xFF555555) else Color(0xFFB0BEC5),
-                    fontSize   = 11.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            Spacer(Modifier.height(4.dp))
-
-            // Timer pill — only when it's this player's turn
-            if (isActive && !isEliminated) {
+                // Position pill
                 Box(
                     modifier = Modifier
-                        .background(timerColor.copy(alpha = 0.18f), RoundedCornerShape(6.dp))
+                        .background(Color(0x14FFFFFF), RoundedCornerShape(6.dp))
+                        .border(0.5.dp, Color(0x1AFFFFFF), RoundedCornerShape(6.dp))
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        text       = "⏱ ${timeRemaining}s",
-                        color      = timerColor,
+                        text       = if (position == 0) "Start" else "Pos $position",
+                        color      = if (isEliminated) Color(0xFF3A3A4A) else Color(0xFF78909C),
                         fontSize   = 10.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
-                Spacer(Modifier.height(4.dp))
-            }
 
-            // Skip dots (3 slots)
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment     = Alignment.CenterVertically
-            ) {
-                repeat(3) { i ->
+                Spacer(Modifier.height(5.dp))
+
+                // Timer bar — only for active, non-eliminated player
+                if (isActive && !isEliminated) {
+                    val timerFraction = timeRemaining / 30f
                     Box(
                         modifier = Modifier
-                            .size(6.dp)
-                            .background(
-                                color = if (i < skipsUsed) Color(0xFFEF5350) else Color(0x33FFFFFF),
-                                shape = CircleShape
-                            )
-                    )
-                }
-            }
-
-            // "YOUR TURN" badge / "OUT" badge
-            when {
-                isEliminated -> {
-                    Spacer(Modifier.height(4.dp))
-                    Box(
-                        modifier = Modifier
-                            .background(Color(0xFFEF5350).copy(alpha = 0.2f), RoundedCornerShape(6.dp))
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text       = "OUT",
-                            color      = Color(0xFFEF5350),
-                            fontSize   = 9.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 0.8.sp
-                        )
-                    }
-                }
-                else -> {
-                    AnimatedVisibility(
-                        visible = isActive,
-                        enter   = fadeIn(tween(300)) + slideInVertically(tween(300)) { it / 2 },
-                        exit    = fadeOut(tween(200)) + slideOutVertically(tween(200)) { it / 2 }
+                            .fillMaxWidth()
+                            .height(3.dp)
+                            .background(Color(0x20FFFFFF), RoundedCornerShape(2.dp))
                     ) {
                         Box(
                             modifier = Modifier
-                                .padding(top = 4.dp)
-                                .background(Color(0xFFFFD700), RoundedCornerShape(6.dp))
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                                .fillMaxWidth(timerFraction)
+                                .fillMaxHeight()
+                                .background(
+                                    Brush.horizontalGradient(
+                                        listOf(timerColor, timerColor.copy(alpha = 0.6f))
+                                    ),
+                                    RoundedCornerShape(2.dp)
+                                )
+                        )
+                    }
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text       = "${timeRemaining}s",
+                        color      = timerColor,
+                        fontSize   = 9.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.height(4.dp))
+                } else {
+                    Spacer(Modifier.height(5.dp))
+                }
+
+                // Skip life dots
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment     = Alignment.CenterVertically
+                ) {
+                    repeat(3) { i ->
+                        Box(
+                            modifier = Modifier
+                                .size(5.dp)
+                                .background(
+                                    if (i < skipsUsed) Color(0xFFEF5350)
+                                    else Color(0x25FFFFFF),
+                                    CircleShape
+                                )
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(4.dp))
+
+                // Badge: OUT or YOUR TURN
+                when {
+                    isEliminated -> {
+                        Box(
+                            modifier = Modifier
+                                .background(Color(0x33EF5350), RoundedCornerShape(4.dp))
+                                .border(0.5.dp, Color(0x55EF5350), RoundedCornerShape(4.dp))
+                                .padding(horizontal = 7.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text          = stringResource(R.string.your_turn_badge),
-                                color         = Color(0xFF1A1A1A),
-                                fontSize      = 9.sp,
+                                text          = "OUT",
+                                color         = Color(0xFFEF5350),
+                                fontSize      = 8.sp,
                                 fontWeight    = FontWeight.ExtraBold,
-                                letterSpacing = 0.8.sp
+                                letterSpacing = 1.sp
                             )
+                        }
+                    }
+                    else -> {
+                        AnimatedVisibility(
+                            visible = isActive,
+                            enter   = fadeIn(tween(300)) + slideInVertically(tween(300)) { it / 2 },
+                            exit    = fadeOut(tween(200)) + slideOutVertically(tween(200)) { it / 2 }
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .background(Color(0xFFFFD700), RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 7.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text          = stringResource(R.string.your_turn_badge),
+                                    color         = Color(0xFF1A1200),
+                                    fontSize      = 8.sp,
+                                    fontWeight    = FontWeight.ExtraBold,
+                                    letterSpacing = 0.8.sp
+                                )
+                            }
                         }
                     }
                 }

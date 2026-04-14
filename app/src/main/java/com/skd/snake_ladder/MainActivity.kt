@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
                 modifier = Modifier
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.safeDrawing),
-                color = androidx.compose.ui.graphics.Color(0xFF141C2E)
+                color = androidx.compose.ui.graphics.Color(0xFF070D1A)
             ) {
                 if (state.gameMode == null) {
                     ModeSelectionScreen(
