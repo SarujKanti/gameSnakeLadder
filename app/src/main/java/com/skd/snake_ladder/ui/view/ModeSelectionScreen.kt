@@ -53,12 +53,19 @@ internal val AppBgGradient = Brush.verticalGradient(
 
 @Composable
 fun ModeSelectionScreen(
-    onModeSelected: (GameMode, Int, List<String>) -> Unit
+    onModeSelected: (GameMode, Int, List<String>) -> Unit,
+    hasSavedGameForCount: (Int) -> Boolean = { false },
+    onResumeSavedGame: () -> Unit = {}
 ) {
     var multiExpanded by remember { mutableStateOf(false) }
     var selectedCount by remember { mutableStateOf(2) }
     // Persistent name inputs for up to 6 players (indices 0–5)
     val nameInputs = remember { mutableStateListOf("", "", "", "", "", "") }
+
+    // Continue-or-new dialog state
+    var showContinueDialog by remember { mutableStateOf(false) }
+    var pendingCount        by remember { mutableStateOf(2) }
+    var pendingNames        by remember { mutableStateOf(listOf<String>()) }
 
     Box(
         modifier = Modifier
@@ -356,11 +363,14 @@ fun ModeSelectionScreen(
                                         )
                                     )
                                     .clickable {
-                                        onModeSelected(
-                                            GameMode.MULTI_PLAYER,
-                                            selectedCount,
-                                            nameInputs.take(selectedCount)
-                                        )
+                                        val names = nameInputs.take(selectedCount)
+                                        if (hasSavedGameForCount(selectedCount)) {
+                                            pendingCount = selectedCount
+                                            pendingNames = names
+                                            showContinueDialog = true
+                                        } else {
+                                            onModeSelected(GameMode.MULTI_PLAYER, selectedCount, names)
+                                        }
                                     },
                                 contentAlignment = Alignment.Center
                             ) {
@@ -385,6 +395,57 @@ fun ModeSelectionScreen(
                 textAlign = TextAlign.Center
             )
         }
+    }
+
+    // ── Continue-or-New dialog ────────────────────────────────────────────
+    if (showContinueDialog) {
+        AlertDialog(
+            onDismissRequest = { showContinueDialog = false },
+            shape          = RoundedCornerShape(24.dp),
+            containerColor = Color(0xFF111C33),
+            title = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("🎲", fontSize = 36.sp)
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text       = "Unfinished Game",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize   = 18.sp,
+                        color      = Color(0xFFECEFF1)
+                    )
+                }
+            },
+            text = {
+                Text(
+                    text      = "You have an unfinished $pendingCount-player game. Continue where you left off, or start a new game?",
+                    fontSize  = 14.sp,
+                    color     = Color(0xFF90A4AE),
+                    textAlign = TextAlign.Center
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showContinueDialog = false
+                        onResumeSavedGame()
+                    },
+                    shape  = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
+                ) {
+                    Text("Continue", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showContinueDialog = false
+                        onModeSelected(GameMode.MULTI_PLAYER, pendingCount, pendingNames)
+                    }
+                ) {
+                    Text("New Game", color = Color(0xFF4FC3F7))
+                }
+            }
+        )
     }
 }
 

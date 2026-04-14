@@ -35,15 +35,17 @@ class MainActivity : ComponentActivity() {
             ) {
                 if (state.gameMode == null) {
                     ModeSelectionScreen(
-                        onModeSelected = { mode, count, names -> viewModel.setGameMode(mode, count, names) }
+                        onModeSelected       = { mode, count, names -> viewModel.setGameMode(mode, count, names) },
+                        hasSavedGameForCount = { count -> viewModel.hasSavedGameForCount(count) },
+                        onResumeSavedGame    = { viewModel.resumeSavedGame() }
                     )
                 } else {
                     BackHandler {
-                        viewModel.resetGame()
+                        viewModel.exitToMenu()
                     }
                     GameScreen(
                         viewModel = viewModel,
-                        onBack = { viewModel.resetGame() }
+                        onBack    = { viewModel.exitToMenu() }
                     )
                 }
             }
