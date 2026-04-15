@@ -217,10 +217,11 @@ fun GameScreen(
 
             // ── Dice ──────────────────────────────────────────────────────
             DiceSection(
-                diceValue = state.diceValue,
-                isRolling = state.isRolling,
-                isEnabled = isDiceEnabled,
-                onRoll    = { controller.rollDice() }
+                diceValue    = state.diceValue,
+                isRolling    = state.isRolling,
+                isEnabled    = isDiceEnabled,
+                waitingLabel = if (state.gameMode == GameMode.ONLINE) "Opponent's Turn" else null,
+                onRoll       = { controller.rollDice() }
             )
 
             Spacer(Modifier.height(20.dp))
