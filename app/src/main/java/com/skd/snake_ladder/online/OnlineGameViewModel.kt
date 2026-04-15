@@ -49,8 +49,9 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
     private var myPlayerId      = ""
     private var myPlayerIndex   = -1
     private var isHost          = false
-    private var timerJob: Job?  = null
-    private var observeJob: Job? = null
+    private var timerJob: Job?       = null
+    private var opponentRollJob: Job? = null
+    private var observeJob: Job?      = null
 
     init {
         myPlayerId = getOrCreatePlayerId(application)
@@ -117,19 +118,32 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
                         )
                     }
                     "playing" -> {
-                        val prev = _state.value
+                        val prev      = _state.value
                         _state.value  = snap.gameState
                         _uiState.value = OnlineUiState.InGame
 
-                        // Start timer when the turn lands on me and wasn't already mine
-                        val isMyTurn = snap.gameState.currentPlayerIndex == myPlayerIndex
+                        val isMyTurn       = snap.gameState.currentPlayerIndex == myPlayerIndex
                         val turnJustChanged = prev.currentPlayerIndex != snap.gameState.currentPlayerIndex
-                        if (isMyTurn && !snap.gameState.isRolling && snap.gameState.winner == null
-                            && (turnJustChanged || timerJob?.isActive != true)) {
-                            startTurnTimer()
+                        val isRolling      = snap.gameState.isRolling
+                        val hasWinner      = snap.gameState.winner != null
+
+                        // ── Opponent dice animation ───────────────────────
+                        // When Firebase signals isRolling=true for someone else's turn,
+                        // cycle random dice values locally so watching players see animation.
+                        if (isRolling && !isMyTurn) {
+                            startOpponentRollAnimation()
+                        } else {
+                            opponentRollJob?.cancel()
                         }
-                        // Cancel timer when it's no longer my turn
-                        if (!isMyTurn && timerJob?.isActive == true) {
+
+                        // ── Timer on ALL devices ──────────────────────────
+                        // Every device runs the countdown locally; only the active
+                        // player's device writes the timeout result to Firebase.
+                        if (!isRolling && !hasWinner &&
+                            (turnJustChanged || timerJob?.isActive != true)) {
+                            startTurnTimer(snap.gameState.currentPlayerIndex)
+                        }
+                        if (isRolling || hasWinner) {
                             timerJob?.cancel()
                         }
                     }
@@ -220,9 +234,15 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    // ── Turn timer ────────────────────────────────────────────────────────────
+    // ── Turn timer (runs on every device) ────────────────────────────────────
 
-    private fun startTurnTimer() {
+    /**
+     * Starts a 30-second local countdown for [activePlayerIndex]'s turn.
+     * All devices run this so the bar animates everywhere.
+     * Only the device whose [myPlayerIndex] matches [activePlayerIndex]
+     * actually writes the timeout result to Firebase.
+     */
+    private fun startTurnTimer(activePlayerIndex: Int) {
         timerJob?.cancel()
         val snap = _state.value
         if (snap.winner != null) return
@@ -233,10 +253,32 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
                 delay(1000)
                 val cur = _state.value
                 if (cur.isRolling || cur.winner != null) return@launch
-                if (cur.currentPlayerIndex != myPlayerIndex) return@launch
+                // Stop if the turn has already moved on (e.g. opponent rolled quickly)
+                if (cur.currentPlayerIndex != activePlayerIndex) return@launch
                 _state.value = cur.copy(timeRemaining = t)
             }
-            onTimeout()
+            // Only the active player's device commits the timeout to Firebase
+            if (activePlayerIndex == myPlayerIndex) {
+                onTimeout()
+            }
+        }
+    }
+
+    // ── Opponent dice animation ───────────────────────────────────────────────
+
+    /**
+     * Cycles random dice face values locally while Firebase reports isRolling=true
+     * for an opponent's turn, so all watching devices see a rolling animation.
+     */
+    private fun startOpponentRollAnimation() {
+        if (opponentRollJob?.isActive == true) return   // already running
+        opponentRollJob = viewModelScope.launch {
+            while (true) {
+                delay(120)
+                val cur = _state.value
+                if (!cur.isRolling) break
+                _state.value = cur.copy(diceValue = (1..6).random())
+            }
         }
     }
 
@@ -299,6 +341,7 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
 
     fun exitToMenu() {
         timerJob?.cancel()
+        opponentRollJob?.cancel()
         observeJob?.cancel()
         viewModelScope.launch {
             if (myPlayerIndex >= 0 && roomCode.isNotBlank()) {
@@ -315,6 +358,7 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
     override fun onCleared() {
         super.onCleared()
         timerJob?.cancel()
+        opponentRollJob?.cancel()
         observeJob?.cancel()
         soundManager.cleanup()
     }
