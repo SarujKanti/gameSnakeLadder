@@ -233,7 +233,8 @@ fun GameScreen(
                 diceValue    = state.diceValue,
                 isRolling    = state.isRolling,
                 isEnabled    = isDiceEnabled,
-                waitingLabel = diceWaitLabel,
+                waitingLabel = if (state.gameMode == GameMode.ONLINE) "Opponent's Turn" else null,
+             
                 onRoll       = { controller.rollDice() }
             )
 
