@@ -156,20 +156,22 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
 
     override fun rollDice() {
         val cur = _state.value
-        if (cur.isRolling || cur.winner != null)               return
-        if (cur.currentPlayerIndex != myPlayerIndex)           return
-        if (myPlayerIndex in cur.eliminatedPlayers)            return
+        if (cur.isRolling || cur.isMoving || cur.winner != null) return
+        if (cur.currentPlayerIndex != myPlayerIndex)            return
+        if (myPlayerIndex in cur.eliminatedPlayers)             return
 
         timerJob?.cancel()
 
         viewModelScope.launch {
-            // Mark rolling in Firebase immediately so others see the spinner
+
+            // ── Phase 1: Dice spinning — broadcast to all players ─────────
             val rolling = cur.copy(isRolling = true, timeRemaining = 30)
             _state.value = rolling
             repository.updateGameState(roomCode, rolling)
 
             soundManager.playDiceSound()
-            delay(300)
+            delay(800)
+
             if (_state.value.gameMode == null) return@launch
 
             val snap       = _state.value
@@ -178,30 +180,41 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
             val startPos   = snap.positions.getOrElse(currentIdx) { 0 }
             val nextIdx    = nextActivePlayer(currentIdx, snap.playerCount, snap.eliminatedPlayers)
 
+            // ── Phase 2: Dice settles — LOCAL only ────────────────────────
+            // Firebase still shows isRolling=true so opponents keep spinning.
+            // On this device the dice face shows the real value and bounces.
+            _state.value = snap.copy(isRolling = false, diceValue = dice)
+            delay(550)
+
+            if (_state.value.gameMode == null) return@launch
+
+            // Exceeds 100 → skip turn
             if (startPos + dice > 100) {
                 val newState = snap.copy(
-                    diceValue = dice, isRolling = false,
-                    currentPlayerIndex = nextIdx, timeRemaining = 30
+                    diceValue          = dice,
+                    isRolling          = false,
+                    currentPlayerIndex = nextIdx,
+                    timeRemaining      = 30
                 )
                 _state.value = newState
                 repository.updateGameState(roomCode, newState)
                 return@launch
             }
 
-            // Step-by-step animation (local only — avoids 6 Firebase writes per turn)
+            // ── Phase 3: Token moves step-by-step (local only) ───────────
+            _state.value = _state.value.copy(isMoving = true)
             var tempPos = startPos
             repeat(dice) {
-                delay(250)
+                delay(200)
                 if (_state.value.gameMode == null || _state.value.positions.size <= currentIdx) return@repeat
                 tempPos++
                 _state.value = _state.value.copy(
-                    positions = _state.value.positions.updatedAt(currentIdx, tempPos),
-                    diceValue = dice
+                    positions = _state.value.positions.updatedAt(currentIdx, tempPos)
                 )
             }
             if (_state.value.gameMode == null || _state.value.positions.size <= currentIdx) return@launch
 
-            // Snake / Ladder delay
+            // Snake / Ladder highlight
             val isSnake  = engine.isSnakePosition(tempPos)
             val isLadder = engine.isLadderPosition(tempPos)
             if (isSnake || isLadder) {
@@ -211,10 +224,11 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
                 )
                 delay(1200)
             } else {
-                delay(400)
+                delay(300)
             }
             if (_state.value.gameMode == null || _state.value.positions.size <= currentIdx) return@launch
 
+            // ── Phase 4: Finalise — single Firebase write ─────────────────
             val finalPos   = engine.calculateNewPosition(tempPos, 0)
             val isWinner   = engine.checkWinner(finalPos)
             val winnerName = if (isWinner) snap.playerNames.getOrElse(currentIdx) { "P${currentIdx + 1}" } else null
@@ -224,6 +238,7 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
                 positions          = _state.value.positions.updatedAt(currentIdx, finalPos),
                 lastEvent          = null,
                 lastEventPosition  = 0,
+                isMoving           = false,
                 isRolling          = false,
                 currentPlayerIndex = nextIdx,
                 winner             = winnerName,

@@ -120,8 +120,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application), G
             for (t in 29 downTo 0) {
                 delay(1000)
                 val cur = _state.value
-                // Stop if rolling, game over, or turn already changed
-                if (cur.isRolling || cur.winner != null) return@launch
+                // Stop if rolling/moving, game over, or turn already changed
+                if (cur.isRolling || cur.isMoving || cur.winner != null) return@launch
                 if (cur.currentPlayerIndex != snap.currentPlayerIndex) return@launch
                 _state.value = cur.copy(timeRemaining = t)
             }
@@ -131,7 +131,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application), G
 
     private fun onTimeout() {
         val s = _state.value
-        if (s.winner != null || s.isRolling) return
+        if (s.winner != null || s.isRolling || s.isMoving) return
 
         val idx       = s.currentPlayerIndex
         val newSkips  = s.skipCounts.toMutableList().also {
@@ -176,22 +176,22 @@ class GameViewModel(application: Application) : AndroidViewModel(application), G
 
     private fun rollDiceInternal(computerInitiated: Boolean) {
         val current = _state.value
-        if (current.isRolling || current.winner != null) return
+        if (current.isRolling || current.isMoving || current.winner != null) return
         if (!computerInitiated &&
             current.gameMode == GameMode.VS_COMPUTER &&
             !current.isPlayerTurn) return
         if (!computerInitiated &&
             current.currentPlayerIndex in current.eliminatedPlayers) return
 
-        // Cancel timer the moment the player taps
         timerJob?.cancel()
 
         viewModelScope.launch {
+
+            // ── Phase 1: Dice spinning ────────────────────────────────────
             _state.value = _state.value.copy(isRolling = true, timeRemaining = 30)
             soundManager.playDiceSound()
-            delay(300)
+            delay(800)
 
-            // Guard: user may have exited while the sound/delay was playing
             if (_state.value.gameMode == null) return@launch
 
             val dice       = diceUseCase.roll()
@@ -200,11 +200,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application), G
             val startPos   = snapshot.positions.getOrElse(currentIdx) { 0 }
             val nextIdx    = nextActivePlayer(currentIdx, snapshot.playerCount, snapshot.eliminatedPlayers)
 
-            // Exceeds 100 → skip turn (no movement)
+            // ── Phase 2: Dice settles — show value before token moves ─────
+            _state.value = _state.value.copy(isRolling = false, diceValue = dice)
+            delay(550)   // let the bounce animation finish so the player sees the result
+
+            if (_state.value.gameMode == null) return@launch
+
+            // Exceeds 100 → skip turn (no movement needed)
             if (startPos + dice > 100) {
-                _state.value = snapshot.copy(
-                    diceValue          = dice,
-                    isRolling          = false,
+                _state.value = _state.value.copy(
                     currentPlayerIndex = nextIdx,
                     timeRemaining      = 30
                 )
@@ -212,23 +216,21 @@ class GameViewModel(application: Application) : AndroidViewModel(application), G
                 return@launch
             }
 
-            // Step-by-step movement
+            // ── Phase 3: Token moves step-by-step ────────────────────────
+            _state.value = _state.value.copy(isMoving = true)
             var tempPos = startPos
             repeat(dice) {
-                delay(250)
-                // Guard: state was reset (e.g. user navigated away) — positions list is now empty
+                delay(200)
                 if (_state.value.gameMode == null || _state.value.positions.size <= currentIdx) return@repeat
                 tempPos++
                 _state.value = _state.value.copy(
-                    positions = _state.value.positions.updatedAt(currentIdx, tempPos),
-                    diceValue = dice
+                    positions = _state.value.positions.updatedAt(currentIdx, tempPos)
                 )
             }
 
-            // Guard after movement loop before snake/ladder check
             if (_state.value.gameMode == null || _state.value.positions.size <= currentIdx) return@launch
 
-            // Snake / Ladder
+            // Snake / Ladder highlight
             val isSnake  = engine.isSnakePosition(tempPos)
             val isLadder = engine.isLadderPosition(tempPos)
             if (isSnake || isLadder) {
@@ -238,13 +240,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application), G
                 )
                 delay(1200)
             } else {
-                delay(400)
+                delay(300)
             }
 
-            // Guard after delay before writing final position
             if (_state.value.gameMode == null || _state.value.positions.size <= currentIdx) return@launch
 
-            // Final position
+            // ── Phase 4: Finalise ─────────────────────────────────────────
             val finalPos   = engine.calculateNewPosition(tempPos, 0)
             val isWinner   = engine.checkWinner(finalPos)
             val winnerName = if (isWinner) playerNameFor(snapshot, currentIdx) else null
@@ -254,7 +255,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application), G
                 positions          = _state.value.positions.updatedAt(currentIdx, finalPos),
                 lastEvent          = null,
                 lastEventPosition  = 0,
-                isRolling          = false,
+                isMoving           = false,
                 currentPlayerIndex = nextIdx,
                 winner             = winnerName,
                 timeRemaining      = 30
