@@ -23,6 +23,8 @@ data class GameState(
     val skipCounts: List<Int> = emptyList(),
     /** Indices of players who used all 3 skips and are now eliminated. */
     val eliminatedPlayers: Set<Int> = emptySet(),
+    /** Indices of online players who disconnected mid-game. */
+    val disconnectedPlayers: Set<Int> = emptySet(),
     /** Seconds remaining for the current player's turn (counts down from 30). */
     val timeRemaining: Int = 30,
     /** Custom names entered by players before the game starts. */

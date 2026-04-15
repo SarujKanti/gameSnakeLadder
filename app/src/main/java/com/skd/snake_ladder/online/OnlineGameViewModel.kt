@@ -45,6 +45,16 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
     private val _uiState  = MutableStateFlow<OnlineUiState>(OnlineUiState.Idle)
     val uiState: StateFlow<OnlineUiState> = _uiState
 
+    /**
+     * Non-null when an opponent has left a 2-player game.
+     * The value is the name of the player who left.
+     * Collect in the UI and reset with [dismissOpponentLeft].
+     */
+    private val _opponentLeftEvent = MutableStateFlow<String?>(null)
+    val opponentLeftEvent: StateFlow<String?> = _opponentLeftEvent
+
+    fun dismissOpponentLeft() { _opponentLeftEvent.value = null }
+
     private var roomCode        = ""
     private var myPlayerId      = ""
     private var myPlayerIndex   = -1
@@ -122,14 +132,18 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
                         _state.value  = snap.gameState
                         _uiState.value = OnlineUiState.InGame
 
-                        val isMyTurn       = snap.gameState.currentPlayerIndex == myPlayerIndex
+                        val isMyTurn        = snap.gameState.currentPlayerIndex == myPlayerIndex
                         val turnJustChanged = prev.currentPlayerIndex != snap.gameState.currentPlayerIndex
-                        val isRolling      = snap.gameState.isRolling
-                        val hasWinner      = snap.gameState.winner != null
+                        val isRolling       = snap.gameState.isRolling
+                        val hasWinner       = snap.gameState.winner != null
+
+                        // ── Detect players who just disconnected ──────────
+                        val justLeft = snap.gameState.disconnectedPlayers - prev.disconnectedPlayers
+                        justLeft.filter { it != myPlayerIndex }.forEach { idx ->
+                            handlePlayerLeft(idx, snap.gameState)
+                        }
 
                         // ── Opponent dice animation ───────────────────────
-                        // When Firebase signals isRolling=true for someone else's turn,
-                        // cycle random dice values locally so watching players see animation.
                         if (isRolling && !isMyTurn) {
                             startOpponentRollAnimation()
                         } else {
@@ -137,8 +151,6 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
                         }
 
                         // ── Timer on ALL devices ──────────────────────────
-                        // Every device runs the countdown locally; only the active
-                        // player's device writes the timeout result to Firebase.
                         if (!isRolling && !hasWinner &&
                             (turnJustChanged || timerJob?.isActive != true)) {
                             startTurnTimer(snap.gameState.currentPlayerIndex)
@@ -178,7 +190,8 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
             val dice       = diceUseCase.roll()
             val currentIdx = snap.currentPlayerIndex
             val startPos   = snap.positions.getOrElse(currentIdx) { 0 }
-            val nextIdx    = nextActivePlayer(currentIdx, snap.playerCount, snap.eliminatedPlayers)
+            val nextIdx    = nextActivePlayer(currentIdx, snap.playerCount,
+                                snap.eliminatedPlayers + snap.disconnectedPlayers)
 
             // ── Phase 2: Dice settles — LOCAL only ────────────────────────
             // Firebase still shows isRolling=true so opponents keep spinning.
@@ -301,6 +314,8 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
         val s = _state.value
         if (s.winner != null || s.isRolling) return
         if (s.currentPlayerIndex != myPlayerIndex) return
+        // Safety: don't time out a player who already disconnected
+        if (myPlayerIndex in s.disconnectedPlayers) return
 
         val idx      = s.currentPlayerIndex
         val newSkips = s.skipCounts.toMutableList().also { if (idx < it.size) it[idx]++ }
@@ -308,12 +323,16 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
         var winner: String? = null
 
         if (newSkips.getOrElse(idx) { 0 } >= 3) {
-            if (s.playerCount == 2) {
-                winner = s.playerNames.getOrElse(1 - idx) { "P${2 - idx}" }
-                soundManager.playWinSound()
+            // For 2-player, the remaining active (non-disconnected) opponent wins
+            val remaining = (0 until s.playerCount)
+                .filter { it != idx && it !in newElim && it !in s.disconnectedPlayers }
+            if (s.playerCount == 2 || remaining.size == 1) {
+                winner = remaining.firstOrNull()?.let { s.playerNames.getOrElse(it) { "P${it + 1}" } }
+                if (winner != null) soundManager.playWinSound()
             } else {
                 newElim.add(idx)
-                val active = (0 until s.playerCount).filter { it !in newElim }
+                val active = (0 until s.playerCount)
+                    .filter { it !in newElim && it !in s.disconnectedPlayers }
                 if (active.size <= 1) {
                     winner = active.firstOrNull()?.let { s.playerNames.getOrElse(it) { "P${it + 1}" } }
                     if (winner != null) soundManager.playWinSound()
@@ -321,7 +340,8 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
             }
         }
 
-        val nextIdx  = if (winner != null) idx else nextActivePlayer(idx, s.playerCount, newElim)
+        val skipAll = newElim + s.disconnectedPlayers
+        val nextIdx = if (winner != null) idx else nextActivePlayer(idx, s.playerCount, skipAll)
         val newState = s.copy(
             skipCounts         = newSkips,
             eliminatedPlayers  = newElim,
@@ -331,6 +351,44 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
         )
         _state.value = newState
         repository.updateGameState(roomCode, newState)
+    }
+
+    // ── Handle player disconnection ───────────────────────────────────────────
+
+    private fun handlePlayerLeft(idx: Int, gs: GameState) {
+        val skipAll = gs.eliminatedPlayers + gs.disconnectedPlayers   // idx already in disconnectedPlayers
+        val activePlayers = (0 until gs.playerCount).filter { it !in skipAll }
+
+        if (gs.playerCount == 2) {
+            // Show "opponent left" dialog — remaining player can return to menu
+            val name = gs.playerNames.getOrElse(idx) { "Player ${idx + 1}" }
+            _opponentLeftEvent.value = name
+            return
+        }
+
+        // 3+ players: determine if only 1 remains → declare winner
+        if (activePlayers.size == 1) {
+            val winnerId   = activePlayers[0]
+            val winnerName = gs.playerNames.getOrElse(winnerId) { "P${winnerId + 1}" }
+            soundManager.playWinSound()
+            val newState = gs.copy(winner = winnerName, currentPlayerIndex = winnerId)
+            _state.value = newState
+            // Acting leader (lowest active index) writes to Firebase
+            if (myPlayerIndex == activePlayers.minOrNull()) {
+                viewModelScope.launch { repository.updateGameState(roomCode, newState) }
+            }
+            return
+        }
+
+        // Advance the turn if the leaving player was the current player
+        if (gs.currentPlayerIndex == idx) {
+            val nextIdx  = nextActivePlayer(idx, gs.playerCount, skipAll)
+            val newState = gs.copy(currentPlayerIndex = nextIdx, timeRemaining = 30)
+            _state.value = newState
+            if (myPlayerIndex == activePlayers.minOrNull()) {
+                viewModelScope.launch { repository.updateGameState(roomCode, newState) }
+            }
+        }
     }
 
     // ── Restart / Exit ────────────────────────────────────────────────────────

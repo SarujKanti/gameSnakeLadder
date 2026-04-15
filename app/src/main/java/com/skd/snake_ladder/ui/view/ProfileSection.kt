@@ -38,22 +38,26 @@ fun ProfileSection(
     timeRemaining: Int = 30,
     skipsUsed: Int = 0,
     isEliminated: Boolean = false,
+    isDisconnected: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    // Treat disconnected like eliminated for visual purposes (dimmed, not active)
+    val effectiveEliminated = isEliminated || isDisconnected
+
     val borderColor by animateColorAsState(
         targetValue = when {
-            isEliminated -> Color(0x44EF5350)
-            isActive     -> Color(0xFFFFD700)
-            else         -> Color(0x18FFFFFF)
+            effectiveEliminated -> Color(0x44546E7A)
+            isActive            -> Color(0xFFFFD700)
+            else                -> Color(0x18FFFFFF)
         },
         animationSpec = tween(400), label = "border"
     )
 
     val shadowElevation by animateFloatAsState(
         targetValue = when {
-            isEliminated -> 0f
-            isActive     -> 14f
-            else         -> 1f
+            effectiveEliminated -> 0f
+            isActive            -> 14f
+            else                -> 1f
         },
         animationSpec = tween(400), label = "shadow"
     )
@@ -65,6 +69,9 @@ fun ProfileSection(
     }
 
     val cardBg = when {
+        isDisconnected -> Brush.linearGradient(
+            listOf(Color(0xFF111820), Color(0xFF0B1018))
+        )
         isEliminated -> Brush.linearGradient(
             listOf(Color(0xFF1C0E0E), Color(0xFF110A0A))
         )
@@ -82,8 +89,8 @@ fun ProfileSection(
                 .shadow(
                     elevation    = shadowElevation.dp,
                     shape        = RoundedCornerShape(14.dp),
-                    ambientColor = if (isActive && !isEliminated) Color(0xFFFFD700) else Color.Black,
-                    spotColor    = if (isActive && !isEliminated) Color(0xFFFFD700) else Color.Black
+                    ambientColor = if (isActive && !effectiveEliminated) Color(0xFFFFD700) else Color.Black,
+                    spotColor    = if (isActive && !effectiveEliminated) Color(0xFFFFD700) else Color.Black
                 )
                 .clip(RoundedCornerShape(14.dp))
                 .background(cardBg)
@@ -101,7 +108,7 @@ fun ProfileSection(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Canvas(modifier = Modifier.size(9.dp)) {
-                        drawCircle(if (isEliminated) Color(0xFF404040) else tokenColor)
+                        drawCircle(if (effectiveEliminated) Color(0xFF404040) else tokenColor)
                         drawCircle(
                             Color(0x66FFFFFF),
                             radius = size.minDimension * 0.22f,
@@ -116,7 +123,7 @@ fun ProfileSection(
                         text       = name,
                         fontWeight = FontWeight.Bold,
                         fontSize   = 12.sp,
-                        color      = if (isEliminated) Color(0xFF4A4A5A) else Color(0xFFECEFF1),
+                        color      = if (effectiveEliminated) Color(0xFF4A4A5A) else Color(0xFFECEFF1),
                         maxLines   = 1
                     )
                 }
@@ -132,7 +139,7 @@ fun ProfileSection(
                 ) {
                     Text(
                         text       = if (position == 0) "Start" else "Pos $position",
-                        color      = if (isEliminated) Color(0xFF3A3A4A) else Color(0xFF78909C),
+                        color      = if (effectiveEliminated) Color(0xFF3A3A4A) else Color(0xFF78909C),
                         fontSize   = 10.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -140,8 +147,8 @@ fun ProfileSection(
 
                 Spacer(Modifier.height(5.dp))
 
-                // Timer bar — only for active, non-eliminated player
-                if (isActive && !isEliminated) {
+                // Timer bar — only for active, non-eliminated/disconnected player
+                if (isActive && !effectiveEliminated) {
                     val timerFraction = timeRemaining / 30f
                     Box(
                         modifier = Modifier
@@ -193,8 +200,24 @@ fun ProfileSection(
 
                 Spacer(Modifier.height(4.dp))
 
-                // Badge: OUT or YOUR TURN
+                // Badge: LEFT / OUT / YOUR TURN
                 when {
+                    isDisconnected -> {
+                        Box(
+                            modifier = Modifier
+                                .background(Color(0x33546E7A), RoundedCornerShape(4.dp))
+                                .border(0.5.dp, Color(0x55546E7A), RoundedCornerShape(4.dp))
+                                .padding(horizontal = 7.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text          = "LEFT",
+                                color         = Color(0xFF78909C),
+                                fontSize      = 8.sp,
+                                fontWeight    = FontWeight.ExtraBold,
+                                letterSpacing = 1.sp
+                            )
+                        }
+                    }
                     isEliminated -> {
                         Box(
                             modifier = Modifier

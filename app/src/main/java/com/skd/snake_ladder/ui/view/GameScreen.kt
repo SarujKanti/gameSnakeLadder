@@ -308,14 +308,15 @@ private fun PlayerRow(
     Row(modifier = Modifier.fillMaxWidth()) {
         indices.forEach { idx ->
             ProfileSection(
-                name          = playerNames.getOrElse(idx) { "P${idx + 1}" },
-                position      = state.positions.getOrElse(idx) { 0 },
-                isActive      = state.currentPlayerIndex == idx && state.winner == null,
-                tokenColor    = PLAYER_COLORS.getOrElse(idx) { Color.Gray },
-                timeRemaining = if (state.currentPlayerIndex == idx) state.timeRemaining else 30,
-                skipsUsed     = state.skipCounts.getOrElse(idx) { 0 },
-                isEliminated  = idx in state.eliminatedPlayers,
-                modifier      = Modifier.weight(1f)
+                name           = playerNames.getOrElse(idx) { "P${idx + 1}" },
+                position       = state.positions.getOrElse(idx) { 0 },
+                isActive       = state.currentPlayerIndex == idx && state.winner == null,
+                tokenColor     = PLAYER_COLORS.getOrElse(idx) { Color.Gray },
+                timeRemaining  = if (state.currentPlayerIndex == idx) state.timeRemaining else 30,
+                skipsUsed      = state.skipCounts.getOrElse(idx) { 0 },
+                isEliminated   = idx in state.eliminatedPlayers,
+                isDisconnected = idx in state.disconnectedPlayers,
+                modifier       = Modifier.weight(1f)
             )
         }
         // Fill remaining slots so cards keep equal width across rows
