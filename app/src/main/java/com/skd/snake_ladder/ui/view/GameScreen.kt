@@ -73,14 +73,15 @@ fun GameScreen(
     }
 
     val isDiceEnabled = !state.isRolling &&
+            !state.isMoving &&
             state.winner == null &&
             (state.gameMode != GameMode.VS_COMPUTER || state.isPlayerTurn) &&
             (state.gameMode != GameMode.ONLINE || state.isPlayerTurn) &&
             state.currentPlayerIndex !in state.eliminatedPlayers
 
     val chipAccent = when {
-        state.winner != null -> Color(0xFFFFD700)
-        state.isRolling      -> Color(0xFF546E7A)
+        state.winner != null             -> Color(0xFFFFD700)
+        state.isRolling || state.isMoving -> Color(0xFF546E7A)
         else -> PLAYER_COLORS.getOrElse(state.currentPlayerIndex) { Color(0xFF1565C0) }
     }
 
@@ -97,9 +98,12 @@ fun GameScreen(
         }
     }
 
-    val topCount      = (state.playerCount + 1) / 2
-    val topIndices    = (0 until topCount)
-    val bottomIndices = (topCount until state.playerCount)
+    // "My" player always sits below the board; opponents are split into rows above.
+    val myIdx          = state.myPlayerIndex
+    val opponentIndices = (0 until state.playerCount).filter { it != myIdx }
+    // Up to 3 opponents per row keeps cards a readable size
+    val opponentRows   = opponentIndices.chunked(3)
+    val maxOppPerRow   = opponentRows.maxOfOrNull { it.size } ?: 1
 
     Box(
         modifier = Modifier
@@ -185,14 +189,18 @@ fun GameScreen(
 
             Spacer(Modifier.height(8.dp))
 
-            // ── Top player row ────────────────────────────────────────────
-            PlayerRow(
-                indices     = topIndices,
-                state       = state,
-                playerNames = playerNames
-            )
+            // ── Opponent rows (above board) ───────────────────────────────
+            opponentRows.forEach { chunk ->
+                PlayerRow(
+                    indices    = chunk,
+                    state      = state,
+                    playerNames = playerNames,
+                    maxPerRow  = maxOppPerRow
+                )
+                Spacer(Modifier.height(6.dp))
+            }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(2.dp))
 
             // ── Board ─────────────────────────────────────────────────────
             BoardWithOverlay(
@@ -203,24 +211,30 @@ fun GameScreen(
                 activeLadderFrom = activeLadderFrom
             )
 
-            // ── Bottom player row ─────────────────────────────────────────
-            if (bottomIndices.any()) {
-                Spacer(Modifier.height(8.dp))
-                PlayerRow(
-                    indices     = bottomIndices,
-                    state       = state,
-                    playerNames = playerNames
-                )
-            }
+            Spacer(Modifier.height(6.dp))
 
-            Spacer(Modifier.height(16.dp))
+            // ── My player card (below board) ──────────────────────────────
+            PlayerRow(
+                indices     = listOf(myIdx),
+                state       = state,
+                playerNames = playerNames,
+                maxPerRow   = 1
+            )
+
+            Spacer(Modifier.height(12.dp))
 
             // ── Dice ──────────────────────────────────────────────────────
+            val diceWaitLabel = when {
+                state.isMoving -> "Moving..."
+                state.gameMode == GameMode.ONLINE && !state.isPlayerTurn -> "Opponent's Turn"
+                else -> null
+            }
             DiceSection(
                 diceValue    = state.diceValue,
                 isRolling    = state.isRolling,
                 isEnabled    = isDiceEnabled,
                 waitingLabel = if (state.gameMode == GameMode.ONLINE) "Opponent's Turn" else null,
+             
                 onRoll       = { controller.rollDice() }
             )
 
@@ -283,16 +297,15 @@ fun GameScreen(
     }
 }
 
-// ── Equal-width player card row ───────────────────────────────────────────────
+// ── Player card row ───────────────────────────────────────────────────────────
 @Composable
 private fun PlayerRow(
-    indices: IntRange,
+    indices: List<Int>,
     state: com.skd.snake_ladder.domain.model.GameState,
-    playerNames: List<String>
+    playerNames: List<String>,
+    maxPerRow: Int = indices.size
 ) {
-    val maxPerRow = (state.playerCount + 1) / 2
     Row(modifier = Modifier.fillMaxWidth()) {
-        var slot = 0
         indices.forEach { idx ->
             ProfileSection(
                 name          = playerNames.getOrElse(idx) { "P${idx + 1}" },
@@ -304,9 +317,9 @@ private fun PlayerRow(
                 isEliminated  = idx in state.eliminatedPlayers,
                 modifier      = Modifier.weight(1f)
             )
-            slot++
         }
-        repeat(maxPerRow - slot) {
+        // Fill remaining slots so cards keep equal width across rows
+        repeat(maxPerRow - indices.size) {
             Spacer(modifier = Modifier.weight(1f))
         }
     }

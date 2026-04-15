@@ -8,6 +8,11 @@ data class GameState(
     val playerCount: Int = 2,
     val diceValue: Int = 1,
     val isRolling: Boolean = false,
+    /**
+     * True while the token is animating step-by-step after the dice has settled.
+     * Local-only — never written to Firebase.
+     */
+    val isMoving: Boolean = false,
     val winner: String? = null,
     val gameMode: GameMode? = null,
     val lastEvent: GameEvent? = null,
