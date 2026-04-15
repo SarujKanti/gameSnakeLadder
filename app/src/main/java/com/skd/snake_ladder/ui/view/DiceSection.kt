@@ -44,9 +44,11 @@ fun DiceSection(
     diceValue: Int,
     isRolling: Boolean,
     isEnabled: Boolean = !isRolling,
+    /** Override the label shown when the dice is disabled (e.g. "Opponent's Turn"). */
+    waitingLabel: String? = null,
     onRoll: () -> Unit
 ) {
-    // ── Rotation animation (spin on tap) ────────────────────────────────
+    // ── Rotation animation (spin on tap OR when isRolling from Firebase) ─
     var rotationTarget by remember { mutableFloatStateOf(0f) }
     val rotation by animateFloatAsState(
         targetValue = rotationTarget,
@@ -64,8 +66,18 @@ fun DiceSection(
         ),
         label = "dice_scale"
     )
+
+    // Trigger spin whenever isRolling becomes true (covers both own tap and
+    // opponent roll seen via Firebase). Settle-bounce plays when it stops.
     LaunchedEffect(isRolling) {
-        if (!isRolling) {
+        if (isRolling) {
+            // Keep advancing rotation target every 250 ms — the 600 ms tween
+            // can't keep up, so the dice appears to spin continuously.
+            while (true) {
+                rotationTarget += 360f
+                delay(250)
+            }
+        } else {
             scaleTarget = 1.20f
             delay(120)
             scaleTarget = 1f
@@ -164,7 +176,7 @@ fun DiceSection(
         Text(
             text = when {
                 isRolling  -> stringResource(R.string.rolling)
-                !isEnabled -> stringResource(R.string.computer_turn)
+                !isEnabled -> waitingLabel ?: stringResource(R.string.computer_turn)
                 else       -> stringResource(R.string.tap_to_roll)
             },
             fontSize   = 15.sp,
