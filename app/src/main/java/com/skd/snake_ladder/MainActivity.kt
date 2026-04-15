@@ -9,9 +9,18 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.skd.snake_ladder.online.OnlineGameViewModel
@@ -33,8 +42,9 @@ class MainActivity : ComponentActivity() {
             val localVm:  GameViewModel       = viewModel()
             val onlineVm: OnlineGameViewModel = viewModel()
 
-            val localState  = localVm.state.collectAsStateWithLifecycle().value
-            val onlineUi    = onlineVm.uiState.collectAsStateWithLifecycle().value
+            val localState       = localVm.state.collectAsStateWithLifecycle().value
+            val onlineUi         = onlineVm.uiState.collectAsStateWithLifecycle().value
+            val opponentLeftName = onlineVm.opponentLeftEvent.collectAsStateWithLifecycle().value
 
             var currentScreen by remember { mutableStateOf(AppScreen.Menu) }
 
@@ -43,6 +53,49 @@ class MainActivity : ComponentActivity() {
                 if (onlineUi is OnlineUiState.InGame && currentScreen == AppScreen.OnlineLobby) {
                     currentScreen = AppScreen.OnlineGame
                 }
+            }
+
+            // Show dialog when opponent leaves a 2-player game
+            if (opponentLeftName != null) {
+                AlertDialog(
+                    onDismissRequest = {},
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                onlineVm.dismissOpponentLeft()
+                                onlineVm.exitToMenu()
+                                currentScreen = AppScreen.Menu
+                            },
+                            shape  = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF1565C0)
+                            )
+                        ) {
+                            Text(
+                                text       = "Back to Menu",
+                                fontWeight = FontWeight.Bold,
+                                fontSize   = 14.sp
+                            )
+                        }
+                    },
+                    title = {
+                        Text(
+                            text       = "Opponent Left",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize   = 18.sp,
+                            color      = Color(0xFFFFD700)
+                        )
+                    },
+                    text = {
+                        Text(
+                            text     = "$opponentLeftName has left the game.",
+                            fontSize = 15.sp,
+                            color    = Color(0xFFECEFF1)
+                        )
+                    },
+                    shape          = RoundedCornerShape(20.dp),
+                    containerColor = Color(0xFF111C33)
+                )
             }
 
             Surface(

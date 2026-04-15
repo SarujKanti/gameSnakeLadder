@@ -87,16 +87,20 @@ class OnlineRepository {
                 val status      = snap.child("status").getValue(String::class.java) ?: "waiting"
                 val joinedCount = snap.child("players").childrenCount.toInt()
 
-                val playerNames = mutableListOf<String>()
-                val playerIds   = mutableListOf<String>()
-                var myIdx       = -1
+                val playerNames       = mutableListOf<String>()
+                val playerIds        = mutableListOf<String>()
+                val disconnectedSet  = mutableSetOf<Int>()
+                var myIdx            = -1
                 for (i in 0 until playerCount) {
-                    val p    = snap.child("players").child(i.toString())
-                    val name = p.child("name").getValue(String::class.java) ?: ""
-                    val id   = p.child("id").getValue(String::class.java) ?: ""
+                    val p         = snap.child("players").child(i.toString())
+                    val name      = p.child("name").getValue(String::class.java) ?: ""
+                    val id        = p.child("id").getValue(String::class.java) ?: ""
+                    val connected = p.child("connected").getValue(Boolean::class.java) ?: true
                     playerNames.add(name.ifBlank { "P${i + 1}" })
                     playerIds.add(id)
                     if (id == myPlayerId) myIdx = i
+                    // Only flag as disconnected during an active game (id known means they joined)
+                    if (!connected && id.isNotBlank()) disconnectedSet.add(i)
                 }
 
                 val gs            = snap.child("gameState")
@@ -118,20 +122,21 @@ class OnlineRepository {
                 }
 
                 val gameState = GameState(
-                    positions          = positions,
-                    currentPlayerIndex = currentIdx,
-                    playerCount        = playerCount,
-                    diceValue          = diceValue,
-                    isRolling          = isRolling,
-                    winner             = winnerRaw.ifBlank { null },
-                    gameMode           = GameMode.ONLINE,
-                    lastEvent          = lastEvent,
-                    lastEventPosition  = lastEventPos,
-                    skipCounts         = skipCounts,
-                    eliminatedPlayers  = eliminatedSet,
-                    timeRemaining      = timeRemaining,
-                    playerNames        = playerNames,
-                    myPlayerIndex      = myIdx
+                    positions           = positions,
+                    currentPlayerIndex  = currentIdx,
+                    playerCount         = playerCount,
+                    diceValue           = diceValue,
+                    isRolling           = isRolling,
+                    winner              = winnerRaw.ifBlank { null },
+                    gameMode            = GameMode.ONLINE,
+                    lastEvent           = lastEvent,
+                    lastEventPosition   = lastEventPos,
+                    skipCounts          = skipCounts,
+                    eliminatedPlayers   = eliminatedSet,
+                    disconnectedPlayers = disconnectedSet,
+                    timeRemaining       = timeRemaining,
+                    playerNames         = playerNames,
+                    myPlayerIndex       = myIdx
                 )
 
                 trySend(RoomSnapshot(
