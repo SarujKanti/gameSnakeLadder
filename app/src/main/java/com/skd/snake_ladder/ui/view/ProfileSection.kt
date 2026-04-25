@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.skd.snake_ladder.R
+import com.skd.snake_ladder.ui.theme.LocalAppColors
 
 @Composable
 fun ProfileSection(
@@ -41,14 +42,16 @@ fun ProfileSection(
     isDisconnected: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalAppColors.current
+
     // Treat disconnected like eliminated for visual purposes (dimmed, not active)
     val effectiveEliminated = isEliminated || isDisconnected
 
     val borderColor by animateColorAsState(
         targetValue = when {
-            effectiveEliminated -> Color(0x44546E7A)
-            isActive            -> Color(0xFFFFD700)
-            else                -> Color(0x18FFFFFF)
+            effectiveEliminated -> colors.cardBorderDisconnected
+            isActive            -> colors.cardBorderActive
+            else                -> colors.cardBorder
         },
         animationSpec = tween(400), label = "border"
     )
@@ -69,18 +72,10 @@ fun ProfileSection(
     }
 
     val cardBg = when {
-        isDisconnected -> Brush.linearGradient(
-            listOf(Color(0xFF111820), Color(0xFF0B1018))
-        )
-        isEliminated -> Brush.linearGradient(
-            listOf(Color(0xFF1C0E0E), Color(0xFF110A0A))
-        )
-        isActive     -> Brush.linearGradient(
-            listOf(Color(0xFF1C3764), Color(0xFF102244))
-        )
-        else         -> Brush.linearGradient(
-            listOf(Color(0xFF1A2540), Color(0xFF0F1829))
-        )
+        isDisconnected -> colors.cardGradientDisconnected
+        isEliminated   -> colors.cardGradientEliminated
+        isActive       -> colors.cardGradientActive
+        else           -> colors.cardGradient
     }
 
     Box(modifier = modifier.padding(4.dp)) {
@@ -123,7 +118,7 @@ fun ProfileSection(
                         text       = name,
                         fontWeight = FontWeight.Bold,
                         fontSize   = 12.sp,
-                        color      = if (effectiveEliminated) Color(0xFF4A4A5A) else Color(0xFFECEFF1),
+                        color      = if (effectiveEliminated) colors.textOnEliminated else colors.textPrimary,
                         maxLines   = 1
                     )
                 }
@@ -133,13 +128,13 @@ fun ProfileSection(
                 // Position pill
                 Box(
                     modifier = Modifier
-                        .background(Color(0x14FFFFFF), RoundedCornerShape(6.dp))
-                        .border(0.5.dp, Color(0x1AFFFFFF), RoundedCornerShape(6.dp))
+                        .background(colors.positionPillBg, RoundedCornerShape(6.dp))
+                        .border(0.5.dp, colors.positionPillBorder, RoundedCornerShape(6.dp))
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                 ) {
                     Text(
                         text       = if (position == 0) "Start" else "Pos $position",
-                        color      = if (effectiveEliminated) Color(0xFF3A3A4A) else Color(0xFF78909C),
+                        color      = if (effectiveEliminated) colors.textHint else colors.textSecondary,
                         fontSize   = 10.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -154,7 +149,7 @@ fun ProfileSection(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(3.dp)
-                            .background(Color(0x20FFFFFF), RoundedCornerShape(2.dp))
+                            .background(colors.timerTrack, RoundedCornerShape(2.dp))
                     ) {
                         Box(
                             modifier = Modifier
@@ -191,7 +186,7 @@ fun ProfileSection(
                                 .size(5.dp)
                                 .background(
                                     if (i < skipsUsed) Color(0xFFEF5350)
-                                    else Color(0x25FFFFFF),
+                                    else colors.skipDotEmpty,
                                     CircleShape
                                 )
                         )

@@ -8,8 +8,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,8 +28,8 @@ import com.skd.snake_ladder.R
 import com.skd.snake_ladder.data.BoardConfig
 import com.skd.snake_ladder.domain.model.GameEvent
 import com.skd.snake_ladder.domain.model.GameMode
+import com.skd.snake_ladder.ui.theme.LocalAppColors
 import com.skd.snake_ladder.viewmodel.GameController
-import com.skd.snake_ladder.viewmodel.SettingsViewModel
 
 private val BoardFrameGradient = Brush.linearGradient(
     listOf(
@@ -47,14 +45,12 @@ private val BoardFrameBorder = Color(0xFF8D6E63)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameScreen(
-    controller:   GameController,
-    settingsVm:   SettingsViewModel,
+    controller: GameController,
     onBack: () -> Unit = {}
 ) {
+    val colors     = LocalAppColors.current
     val state      by controller.state.collectAsStateWithLifecycle()
     val boardConfig = controller.boardConfig
-
-    var showSettings by remember { mutableStateOf(false) }
 
     BackHandler { onBack() }
 
@@ -90,7 +86,7 @@ fun GameScreen(
     val chipAccent = when {
         state.winner != null              -> Color(0xFFFFD700)
         state.isRolling || state.isMoving -> Color(0xFF546E7A)
-        else -> PLAYER_COLORS.getOrElse(state.currentPlayerIndex) { Color(0xFF1565C0) }
+        else -> PLAYER_COLORS.getOrElse(state.currentPlayerIndex) { colors.accent }
     }
 
     val activeSnakeFrom  = if (state.lastEvent == GameEvent.SNAKE)  state.lastEventPosition else null
@@ -106,16 +102,17 @@ fun GameScreen(
         }
     }
 
-    // "My" player always sits below the board; opponents are split into rows above.
     val myIdx           = state.myPlayerIndex
     val opponentIndices = (0 until state.playerCount).filter { it != myIdx }
     val opponentRows    = opponentIndices.chunked(3)
     val maxOppPerRow    = opponentRows.maxOfOrNull { it.size } ?: 1
 
+    val dialogBg = if (colors.isDark) Color(0xFF111C33) else Color(0xFFFFFFFF)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppBgGradient)
+            .background(colors.bgGradient)
     ) {
         Column(
             modifier = Modifier
@@ -126,39 +123,31 @@ fun GameScreen(
         ) {
 
             // ── Top bar ───────────────────────────────────────────────────
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                verticalAlignment   = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .padding(vertical = 4.dp)
             ) {
                 val cdBack = stringResource(R.string.cd_back)
                 TextButton(
                     onClick  = onBack,
-                    modifier = Modifier.semantics { contentDescription = cdBack }
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .semantics { contentDescription = cdBack }
                 ) {
                     Text(
                         text     = "← ${stringResource(R.string.back_to_menu)}",
                         fontSize = 13.sp,
-                        color    = Color(0xFF4FC3F7)
+                        color    = colors.accent
                     )
                 }
                 Text(
                     text       = stringResource(R.string.game_title),
                     fontWeight = FontWeight.ExtraBold,
                     fontSize   = 17.sp,
-                    color      = Color(0xFFECEFF1)
+                    color      = colors.textPrimary,
+                    modifier   = Modifier.align(Alignment.Center)
                 )
-                // ── Settings gear icon ─────────────────────────────────────
-                IconButton(onClick = { showSettings = true }) {
-                    Icon(
-                        imageVector        = Icons.Default.Settings,
-                        contentDescription = "Settings",
-                        tint               = Color(0xFF4FC3F7),
-                        modifier           = Modifier.size(22.dp)
-                    )
-                }
             }
 
             // Subtle header separator
@@ -168,7 +157,7 @@ fun GameScreen(
                     .height(1.dp)
                     .background(
                         Brush.horizontalGradient(
-                            listOf(Color.Transparent, Color(0x22FFFFFF), Color.Transparent)
+                            listOf(Color.Transparent, colors.divider, Color.Transparent)
                         )
                     )
             )
@@ -278,7 +267,7 @@ fun GameScreen(
                     TextButton(onClick = onBack) {
                         Text(
                             text  = stringResource(R.string.back_to_menu),
-                            color = Color(0xFF4FC3F7)
+                            color = colors.accent
                         )
                     }
                 },
@@ -299,23 +288,15 @@ fun GameScreen(
                         text      = stringResource(R.string.winner_message, state.winner ?: ""),
                         fontSize  = 16.sp,
                         textAlign = TextAlign.Center,
-                        color     = Color(0xFFECEFF1)
+                        color     = colors.textPrimary
                     )
                 },
                 shape             = RoundedCornerShape(24.dp),
-                containerColor    = Color(0xFF111C33),
-                titleContentColor = Color.White,
-                textContentColor  = Color(0xFFB0BEC5)
+                containerColor    = dialogBg,
+                titleContentColor = colors.textPrimary,
+                textContentColor  = colors.textSecondary
             )
         }
-    }
-
-    // ── Settings bottom sheet ─────────────────────────────────────────────
-    if (showSettings) {
-        SettingsSheet(
-            viewModel = settingsVm,
-            onDismiss = { showSettings = false }
-        )
     }
 }
 

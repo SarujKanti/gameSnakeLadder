@@ -16,14 +16,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.skd.snake_ladder.ui.theme.LocalAppColors
 import kotlinx.coroutines.delay
-
-private val SplashBg = Brush.verticalGradient(
-    listOf(Color(0xFF0A1628), Color(0xFF070D1A), Color(0xFF0D1F3C))
-)
 
 @Composable
 fun SplashScreen(onDone: () -> Unit) {
+    val colors = LocalAppColors.current
 
     val alpha  = remember { Animatable(0f) }
     val scale  = remember { Animatable(0.72f) }
@@ -44,7 +42,7 @@ fun SplashScreen(onDone: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(SplashBg)
+            .background(colors.bgGradient)
     ) {
         // ── Centre logo ────────────────────────────────────────────────────────
         Column(
@@ -57,18 +55,18 @@ fun SplashScreen(onDone: () -> Unit) {
             Text(text = "🎲🐍", fontSize = 72.sp)
             Spacer(Modifier.height(16.dp))
             Text(
-                text       = "Snake & Ladder",
-                fontSize   = 30.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color      = Color(0xFFECEFF1),
+                text          = "Snake & Ladder",
+                fontSize      = 30.sp,
+                fontWeight    = FontWeight.ExtraBold,
+                color         = colors.textPrimary,
                 letterSpacing = 1.sp
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text      = "Roll · Climb · Win",
-                fontSize  = 14.sp,
-                color     = Color(0xFF4FC3F7),
-                fontWeight = FontWeight.Medium,
+                text          = "Roll · Climb · Win",
+                fontSize      = 14.sp,
+                color         = colors.accent,
+                fontWeight    = FontWeight.Medium,
                 letterSpacing = 2.sp
             )
         }
@@ -87,16 +85,16 @@ fun SplashScreen(onDone: () -> Unit) {
                         .height(1.dp)
                         .background(
                             Brush.horizontalGradient(
-                                listOf(Color.Transparent, Color(0x44FFFFFF), Color.Transparent)
+                                listOf(Color.Transparent, colors.divider, Color.Transparent)
                             )
                         )
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text      = "Powered by SKD",
-                    fontSize  = 12.sp,
-                    color     = Color(0xFF546E7A),
-                    fontWeight = FontWeight.SemiBold,
+                    text          = "Powered by SKD",
+                    fontSize      = 12.sp,
+                    color         = colors.textSecondary,
+                    fontWeight    = FontWeight.SemiBold,
                     letterSpacing = 1.sp
                 )
             }
