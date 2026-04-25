@@ -76,6 +76,7 @@ class MainActivity : ComponentActivity() {
                         // ── Menu ──────────────────────────────────────────────
                         AppScreen.Menu -> {
                             ModeSelectionScreen(
+                                settingsVm           = settingsVm,
                                 onModeSelected       = { mode, count, names ->
                                     localVm.setGameMode(mode, count, names)
                                     currentScreen = AppScreen.LocalGame
