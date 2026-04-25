@@ -17,26 +17,28 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import com.skd.snake_ladder.core.BoardMapper
-import com.skd.snake_ladder.data.SnakeLadderConfig
+import com.skd.snake_ladder.data.BoardConfig
+import com.skd.snake_ladder.data.BoardConfigs
 import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-// Each snake has its own colour scheme: (outerBody, head/dark, innerStripe)
-private val SNAKE_COLORS = mapOf(
-    99 to Triple(Color(0xFFD32F2F), Color(0xFFB71C1C), Color(0xFFEF5350)),  // Crimson
-    95 to Triple(Color(0xFFAD1457), Color(0xFF880E4F), Color(0xFFF06292)),  // Deep Pink
-    70 to Triple(Color(0xFF6A1B9A), Color(0xFF4A148C), Color(0xFFCE93D8)),  // Purple
-    52 to Triple(Color(0xFFE64A19), Color(0xFFBF360C), Color(0xFFFF7043)),  // Orange
-    25 to Triple(Color(0xFF00695C), Color(0xFF004D40), Color(0xFF4DB6AC)),  // Teal
+// Indexed colour palette — one entry per snake, cycles if more than 6 snakes
+private val SNAKE_PALETTE = listOf(
+    Triple(Color(0xFFD32F2F), Color(0xFFB71C1C), Color(0xFFEF5350)),  // Crimson
+    Triple(Color(0xFFAD1457), Color(0xFF880E4F), Color(0xFFF06292)),  // Deep Pink
+    Triple(Color(0xFF6A1B9A), Color(0xFF4A148C), Color(0xFFCE93D8)),  // Purple
+    Triple(Color(0xFFE64A19), Color(0xFFBF360C), Color(0xFFFF7043)),  // Deep Orange
+    Triple(Color(0xFF00695C), Color(0xFF004D40), Color(0xFF4DB6AC)),  // Teal
+    Triple(Color(0xFF2E7D32), Color(0xFF1B5E20), Color(0xFF66BB6A)),  // Green
 )
-private val DEFAULT_SNAKE = Triple(Color(0xFF2E7D32), Color(0xFF1B5E20), Color(0xFF66BB6A))
 
 @Composable
 fun BoardCanvas(
-    playerPositions: List<Pair<Int, Color>>,
-    activeSnakeFrom: Int?  = null,
-    activeLadderFrom: Int? = null,
+    playerPositions:  List<Pair<Int, Color>>,
+    activeSnakeFrom:  Int?         = null,
+    activeLadderFrom: Int?         = null,
+    boardConfig:      BoardConfig  = BoardConfigs.configs[0],
 ) {
     Canvas(
         modifier = Modifier
@@ -49,7 +51,7 @@ fun BoardCanvas(
         for (row in 0 until 10) {
             for (col in 0 until 10) {
                 drawRect(
-                    color = if ((row + col) % 2 == 0) Color(0xFFFFF9C4) else Color(0xFFB3E5FC),
+                    color   = if ((row + col) % 2 == 0) Color(0xFFFFF9C4) else Color(0xFFB3E5FC),
                     topLeft = Offset(col * cellSize, row * cellSize),
                     size    = Size(cellSize, cellSize)
                 )
@@ -63,40 +65,38 @@ fun BoardCanvas(
         }
 
         // ── 2. Ladders ───────────────────────────────────────────────────
-        SnakeLadderConfig.ladders.forEach { (from, to) ->
+        boardConfig.ladders.forEach { (from, to) ->
             val fc = BoardMapper.map(from)
             val tc = BoardMapper.map(to)
-            val isActive = (from == activeLadderFrom)
             drawLadder(
                 bottom   = Offset(fc.col * cellSize + cellSize / 2f, fc.row * cellSize + cellSize / 2f),
                 top      = Offset(tc.col * cellSize + cellSize / 2f, tc.row * cellSize + cellSize / 2f),
                 cellSize = cellSize,
-                isActive = isActive
+                isActive = (from == activeLadderFrom)
             )
         }
 
         // ── 3. Snakes ────────────────────────────────────────────────────
-        SnakeLadderConfig.snakes.forEach { (from, to) ->
-            val fc = BoardMapper.map(from)
-            val tc = BoardMapper.map(to)
-            val isActive = (from == activeSnakeFrom)
-            val colors = SNAKE_COLORS[from] ?: DEFAULT_SNAKE
+        boardConfig.snakes.entries.forEachIndexed { idx, (from, to) ->
+            val fc     = BoardMapper.map(from)
+            val tc     = BoardMapper.map(to)
+            val colors = SNAKE_PALETTE[idx % SNAKE_PALETTE.size]
             drawSnake(
                 head     = Offset(fc.col * cellSize + cellSize / 2f, fc.row * cellSize + cellSize / 2f),
                 tail     = Offset(tc.col * cellSize + cellSize / 2f, tc.row * cellSize + cellSize / 2f),
                 cellSize = cellSize,
                 colors   = colors,
-                isActive = isActive
+                isActive = (from == activeSnakeFrom)
             )
         }
 
         // ── 4. Cell numbers (always on top) ──────────────────────────────
         val textPaint = AndroidPaint().apply {
-            color       = android.graphics.Color.BLACK
-            textSize    = cellSize / 4.2f
-            textAlign   = AndroidPaint.Align.CENTER
+            color          = android.graphics.Color.BLACK
+            textSize       = cellSize / 4.2f
+            textAlign      = AndroidPaint.Align.CENTER
             isFakeBoldText = true
-            isAntiAlias = true
+            isAntiAlias    = true
         }
         val bgPaint = AndroidPaint().apply {
             color       = android.graphics.Color.argb(185, 255, 255, 255)
@@ -105,10 +105,10 @@ fun BoardCanvas(
         for (row in 0 until 10) {
             for (col in 0 until 10) {
                 val boardRow = 9 - row
-                val base   = boardRow * 10
-                val number = if (boardRow % 2 == 0) base + col + 1 else base + (10 - col)
-                val x  = col * cellSize + cellSize / 2f
-                val y  = row * cellSize + textPaint.textSize * 1.1f
+                val base     = boardRow * 10
+                val number   = if (boardRow % 2 == 0) base + col + 1 else base + (10 - col)
+                val x   = col * cellSize + cellSize / 2f
+                val y   = row * cellSize + textPaint.textSize * 1.1f
                 val pad = textPaint.textSize * 0.20f
                 drawContext.canvas.nativeCanvas.drawRoundRect(
                     x - textPaint.textSize * 0.78f, y - textPaint.textSize - pad,
@@ -127,9 +127,9 @@ fun BoardCanvas(
             val cy = m.row * cellSize + cellSize / 2f
             val r  = if (players.size == 1) cellSize * 0.24f else cellSize * 0.165f
 
-            players.forEachIndexed { idx, (_, color) ->
+            players.forEachIndexed { i, (_, color) ->
                 val off = if (players.size == 2)
-                    if (idx == 0) Offset(-r * 0.92f, 0f) else Offset(r * 0.92f, 0f)
+                    if (i == 0) Offset(-r * 0.92f, 0f) else Offset(r * 0.92f, 0f)
                 else Offset(0f, 0f)
                 val c = Offset(cx + off.x, cy + off.y)
 
@@ -163,7 +163,6 @@ private fun DrawScope.drawLadder(
     val r2s = Offset(bottom.x - px * halfGap, bottom.y - py * halfGap)
     val r2e = Offset(top.x   - px * halfGap, top.y   - py * halfGap)
 
-    // Glow when active
     if (isActive) {
         drawLine(Color(0x88FFD700), r1s, r1e, strokeWidth = railW * 3.5f, cap = StrokeCap.Round)
         drawLine(Color(0x88FFD700), r2s, r2e, strokeWidth = railW * 3.5f, cap = StrokeCap.Round)
@@ -196,7 +195,7 @@ private fun DrawScope.drawLadder(
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  Snake — sinusoidal body, per-snake colour, white glow when active
+//  Snake — sinusoidal body, indexed colour, white glow when active
 // ═══════════════════════════════════════════════════════════════════
 private fun DrawScope.drawSnake(
     head: Offset, tail: Offset, cellSize: Float,
@@ -210,7 +209,7 @@ private fun DrawScope.drawSnake(
     val (outerCol, headCol, stripeCol) = colors
     val bodyW     = cellSize * 0.18f
     val amplitude = cellSize * 0.13f
-    val halfWaves = 6   // 3 S-curves; sin(nπ)=0 so ends land exactly on head/tail
+    val halfWaves = 6
 
     val steps = 80
     val pts = Array(steps + 1) { i ->
@@ -223,7 +222,6 @@ private fun DrawScope.drawSnake(
         for (i in 1..steps) lineTo(pts[i].x, pts[i].y)
     }
 
-    // White glow halo when active
     if (isActive) {
         drawPath(bodyPath, Color(0xAAFFFFFF), style = Stroke(width = bodyW * 2.6f, cap = StrokeCap.Round))
     }
@@ -232,27 +230,24 @@ private fun DrawScope.drawSnake(
     drawPath(bodyPath, outerCol,          style = Stroke(width = bodyW,          cap = StrokeCap.Round))
     drawPath(bodyPath, stripeCol,         style = Stroke(width = bodyW * 0.46f, cap = StrokeCap.Round))
 
-    // ── Head ──────────────────────────────────────────────────────
     val headR = cellSize * 0.165f
     if (isActive) drawCircle(Color(0xAAFFFFFF), radius = headR * 2.2f, center = head)
-    drawCircle(Color(0x44000000), radius = headR + 2f,      center = head + Offset(2f, 2f))
-    drawCircle(headCol,           radius = headR,            center = head)
-    drawCircle(outerCol,          radius = headR * 0.65f,   center = head)
+    drawCircle(Color(0x44000000), radius = headR + 2f,     center = head + Offset(2f, 2f))
+    drawCircle(headCol,           radius = headR,           center = head)
+    drawCircle(outerCol,          radius = headR * 0.65f,  center = head)
 
-    // ── Eyes ──────────────────────────────────────────────────────
     val eyeR   = headR * 0.28f
     val eyeOff = headR * 0.50f
     for (eye in listOf(
         Offset(head.x + px * eyeOff, head.y + py * eyeOff),
         Offset(head.x - px * eyeOff, head.y - py * eyeOff)
     )) {
-        drawCircle(Color.White,           radius = eyeR,          center = eye)
-        drawCircle(Color(0xFF1A237E),     radius = eyeR * 0.65f,  center = eye)
-        drawCircle(Color.Black,           radius = eyeR * 0.33f,  center = eye)
-        drawCircle(Color.White,           radius = eyeR * 0.16f,  center = eye - Offset(eyeR * 0.18f, eyeR * 0.18f))
+        drawCircle(Color.White,       radius = eyeR,          center = eye)
+        drawCircle(Color(0xFF1A237E), radius = eyeR * 0.65f,  center = eye)
+        drawCircle(Color.Black,       radius = eyeR * 0.33f,  center = eye)
+        drawCircle(Color.White,       radius = eyeR * 0.16f,  center = eye - Offset(eyeR * 0.18f, eyeR * 0.18f))
     }
 
-    // ── Forked tongue ─────────────────────────────────────────────
     val tongLen    = headR * 1.35f
     val forkLen    = headR * 0.55f
     val forkSpread = forkLen * 0.55f
@@ -264,6 +259,5 @@ private fun DrawScope.drawSnake(
         lineTo(fL.x, fL.y); moveTo(tipX, tipY); lineTo(fR.x, fR.y)
     }, color = Color(0xFFE53935), style = Stroke(width = headR * 0.16f, cap = StrokeCap.Round))
 
-    // ── Tail tip ──────────────────────────────────────────────────
     drawCircle(outerCol, radius = bodyW * 0.18f, center = tail)
 }
