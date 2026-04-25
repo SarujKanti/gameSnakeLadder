@@ -1,5 +1,7 @@
 package com.skd.snake_ladder.viewmodel
 
+import com.skd.snake_ladder.data.BoardConfig
+import com.skd.snake_ladder.data.BoardConfigs
 import com.skd.snake_ladder.domain.model.GameState
 import kotlinx.coroutines.flow.StateFlow
 
@@ -10,6 +12,10 @@ import kotlinx.coroutines.flow.StateFlow
  */
 interface GameController {
     val state: StateFlow<GameState>
+
+    /** Active board configuration — drives BoardCanvas rendering. */
+    val boardConfig: BoardConfig get() = BoardConfigs.configs[0]
+
     fun rollDice()
     fun restartGame()
 }

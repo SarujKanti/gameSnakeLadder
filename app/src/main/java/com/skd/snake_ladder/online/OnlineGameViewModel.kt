@@ -35,9 +35,12 @@ sealed class OnlineUiState {
 class OnlineGameViewModel(application: Application) : AndroidViewModel(application), GameController {
 
     private val repository   = OnlineRepository()
-    private val engine       = GameEngine()
+    private val settings     = com.skd.snake_ladder.data.SettingsRepository(application)
+    private val engine       = GameEngine(settings.selectedBoard)
     private val soundManager = SoundManager(application)
     private val diceUseCase  = RollDiceUseCase()
+
+    override val boardConfig: com.skd.snake_ladder.data.BoardConfig get() = engine.config
 
     private val _state    = MutableStateFlow(GameState())
     override val state: StateFlow<GameState> = _state
@@ -227,7 +230,7 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
             }
             if (_state.value.gameMode == null || _state.value.positions.size <= currentIdx) return@launch
 
-            // Snake / Ladder highlight
+            // Snake / Ladder highlight + sound
             val isSnake  = engine.isSnakePosition(tempPos)
             val isLadder = engine.isLadderPosition(tempPos)
             if (isSnake || isLadder) {
@@ -235,6 +238,7 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
                     lastEvent         = if (isSnake) GameEvent.SNAKE else GameEvent.LADDER,
                     lastEventPosition = tempPos
                 )
+                if (isSnake) soundManager.playSnakeSound() else soundManager.playLadderSound()
                 delay(1200)
             } else {
                 delay(300)

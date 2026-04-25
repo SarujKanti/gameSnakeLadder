@@ -8,9 +8,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,9 +27,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.skd.snake_ladder.R
+import com.skd.snake_ladder.data.BoardConfig
 import com.skd.snake_ladder.domain.model.GameEvent
 import com.skd.snake_ladder.domain.model.GameMode
 import com.skd.snake_ladder.viewmodel.GameController
+import com.skd.snake_ladder.viewmodel.SettingsViewModel
 
 private val BoardFrameGradient = Brush.linearGradient(
     listOf(
@@ -41,12 +44,17 @@ private val BoardFrameGradient = Brush.linearGradient(
 )
 private val BoardFrameBorder = Color(0xFF8D6E63)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameScreen(
-    controller: GameController,
+    controller:   GameController,
+    settingsVm:   SettingsViewModel,
     onBack: () -> Unit = {}
 ) {
-    val state by controller.state.collectAsStateWithLifecycle()
+    val state      by controller.state.collectAsStateWithLifecycle()
+    val boardConfig = controller.boardConfig
+
+    var showSettings by remember { mutableStateOf(false) }
 
     BackHandler { onBack() }
 
@@ -80,7 +88,7 @@ fun GameScreen(
             state.currentPlayerIndex !in state.eliminatedPlayers
 
     val chipAccent = when {
-        state.winner != null             -> Color(0xFFFFD700)
+        state.winner != null              -> Color(0xFFFFD700)
         state.isRolling || state.isMoving -> Color(0xFF546E7A)
         else -> PLAYER_COLORS.getOrElse(state.currentPlayerIndex) { Color(0xFF1565C0) }
     }
@@ -99,11 +107,10 @@ fun GameScreen(
     }
 
     // "My" player always sits below the board; opponents are split into rows above.
-    val myIdx          = state.myPlayerIndex
+    val myIdx           = state.myPlayerIndex
     val opponentIndices = (0 until state.playerCount).filter { it != myIdx }
-    // Up to 3 opponents per row keeps cards a readable size
-    val opponentRows   = opponentIndices.chunked(3)
-    val maxOppPerRow   = opponentRows.maxOfOrNull { it.size } ?: 1
+    val opponentRows    = opponentIndices.chunked(3)
+    val maxOppPerRow    = opponentRows.maxOfOrNull { it.size } ?: 1
 
     Box(
         modifier = Modifier
@@ -123,7 +130,7 @@ fun GameScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment   = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 val cdBack = stringResource(R.string.cd_back)
@@ -143,7 +150,15 @@ fun GameScreen(
                     fontSize   = 17.sp,
                     color      = Color(0xFFECEFF1)
                 )
-                Spacer(modifier = Modifier.width(88.dp))
+                // ── Settings gear icon ─────────────────────────────────────
+                IconButton(onClick = { showSettings = true }) {
+                    Icon(
+                        imageVector        = Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint               = Color(0xFF4FC3F7),
+                        modifier           = Modifier.size(22.dp)
+                    )
+                }
             }
 
             // Subtle header separator
@@ -170,7 +185,7 @@ fun GameScreen(
                     .padding(horizontal = 20.dp, vertical = 7.dp)
             ) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment     = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Box(
@@ -192,10 +207,10 @@ fun GameScreen(
             // ── Opponent rows (above board) ───────────────────────────────
             opponentRows.forEach { chunk ->
                 PlayerRow(
-                    indices    = chunk,
-                    state      = state,
+                    indices     = chunk,
+                    state       = state,
                     playerNames = playerNames,
-                    maxPerRow  = maxOppPerRow
+                    maxPerRow   = maxOppPerRow
                 )
                 Spacer(Modifier.height(6.dp))
             }
@@ -208,7 +223,8 @@ fun GameScreen(
                     Pair(pos, PLAYER_COLORS.getOrElse(idx) { Color.Gray })
                 },
                 activeSnakeFrom  = activeSnakeFrom,
-                activeLadderFrom = activeLadderFrom
+                activeLadderFrom = activeLadderFrom,
+                boardConfig      = boardConfig
             )
 
             Spacer(Modifier.height(6.dp))
@@ -224,17 +240,15 @@ fun GameScreen(
             Spacer(Modifier.height(12.dp))
 
             // ── Dice ──────────────────────────────────────────────────────
-            val diceWaitLabel = when {
-                state.isMoving -> "Moving..."
-                state.gameMode == GameMode.ONLINE && !state.isPlayerTurn -> "Opponent's Turn"
-                else -> null
-            }
             DiceSection(
                 diceValue    = state.diceValue,
                 isRolling    = state.isRolling,
                 isEnabled    = isDiceEnabled,
-                waitingLabel = if (state.gameMode == GameMode.ONLINE) "Opponent's Turn" else null,
-             
+                waitingLabel = when {
+                    state.isMoving                                           -> "Moving..."
+                    state.gameMode == GameMode.ONLINE && !state.isPlayerTurn -> "Opponent's Turn"
+                    else                                                     -> null
+                },
                 onRoll       = { controller.rollDice() }
             )
 
@@ -295,6 +309,14 @@ fun GameScreen(
             )
         }
     }
+
+    // ── Settings bottom sheet ─────────────────────────────────────────────
+    if (showSettings) {
+        SettingsSheet(
+            viewModel = settingsVm,
+            onDismiss = { showSettings = false }
+        )
+    }
 }
 
 // ── Player card row ───────────────────────────────────────────────────────────
@@ -331,7 +353,8 @@ private fun PlayerRow(
 private fun BoardWithOverlay(
     playerPositions: List<Pair<Int, Color>>,
     activeSnakeFrom: Int?,
-    activeLadderFrom: Int?
+    activeLadderFrom: Int?,
+    boardConfig: BoardConfig
 ) {
     Box(
         modifier = Modifier
@@ -345,7 +368,8 @@ private fun BoardWithOverlay(
         BoardCanvas(
             playerPositions  = playerPositions,
             activeSnakeFrom  = activeSnakeFrom,
-            activeLadderFrom = activeLadderFrom
+            activeLadderFrom = activeLadderFrom,
+            boardConfig      = boardConfig
         )
     }
 }

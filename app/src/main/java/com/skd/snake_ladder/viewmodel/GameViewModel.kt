@@ -5,6 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.skd.snake_ladder.core.GameEngine
 import com.skd.snake_ladder.core.SoundManager
+import com.skd.snake_ladder.data.BoardConfig
+import com.skd.snake_ladder.data.SettingsRepository
 import com.skd.snake_ladder.domain.model.GameEvent
 import com.skd.snake_ladder.domain.model.GameMode
 import com.skd.snake_ladder.domain.model.GameState
@@ -17,9 +19,13 @@ import kotlinx.coroutines.launch
 
 class GameViewModel(application: Application) : AndroidViewModel(application), GameController {
 
-    private val engine       = GameEngine()
+    private val settings     = SettingsRepository(application)
+    private var engine       = GameEngine(settings.selectedBoard)
     private val diceUseCase  = RollDiceUseCase()
     private val soundManager = SoundManager(application)
+
+    // Expose the active board config so GameScreen can pass it to BoardCanvas
+    override val boardConfig: BoardConfig get() = engine.config
 
     private val _state = MutableStateFlow(GameState())
     override val state: StateFlow<GameState> = _state
@@ -35,6 +41,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application), G
 
     fun setGameMode(mode: GameMode, playerCount: Int = 2, playerNames: List<String> = emptyList()) {
         savedMultiplayerState = null          // starting fresh always clears the cache
+        // Re-read board config so any change made in Settings takes effect
+        engine = GameEngine(settings.selectedBoard)
         val count = playerCount.coerceIn(2, 6)
         _state.value = GameState(
             gameMode          = mode,
@@ -230,7 +238,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application), G
 
             if (_state.value.gameMode == null || _state.value.positions.size <= currentIdx) return@launch
 
-            // Snake / Ladder highlight
+            // Snake / Ladder highlight + sound
             val isSnake  = engine.isSnakePosition(tempPos)
             val isLadder = engine.isLadderPosition(tempPos)
             if (isSnake || isLadder) {
@@ -238,6 +246,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application), G
                     lastEvent         = if (isSnake) GameEvent.SNAKE else GameEvent.LADDER,
                     lastEventPosition = tempPos
                 )
+                if (isSnake) soundManager.playSnakeSound() else soundManager.playLadderSound()
                 delay(1200)
             } else {
                 delay(300)
