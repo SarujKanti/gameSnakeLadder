@@ -74,10 +74,12 @@ fun ModeSelectionScreen(
     val colors = LocalAppColors.current
 
     // ── Live settings state ────────────────────────────────────────────────────
-    val boardIndex   by settingsVm.boardIndex.collectAsStateWithLifecycle()
-    val soundEnabled by settingsVm.soundEnabled.collectAsStateWithLifecycle()
-    val themeMode    by settingsVm.themeMode.collectAsStateWithLifecycle()
-    val activeBoard  = BoardConfigs.configs.getOrElse(boardIndex) { BoardConfigs.configs[0] }
+    val boardIndex      by settingsVm.boardIndex.collectAsStateWithLifecycle()
+    val boardColorIndex by settingsVm.boardColorIndex.collectAsStateWithLifecycle()
+    val soundEnabled    by settingsVm.soundEnabled.collectAsStateWithLifecycle()
+    val themeMode       by settingsVm.themeMode.collectAsStateWithLifecycle()
+    val activeBoard     = BoardConfigs.configs.getOrElse(boardIndex) { BoardConfigs.configs[0] }
+    val activeBoardColor = com.skd.snake_ladder.data.BoardColorSchemes.schemes.getOrElse(boardColorIndex) { com.skd.snake_ladder.data.BoardColorSchemes.schemes[0] }
 
     var showSettings     by remember { mutableStateOf(false) }
     var multiExpanded    by remember { mutableStateOf(false) }

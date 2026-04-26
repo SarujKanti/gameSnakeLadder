@@ -41,6 +41,7 @@ class OnlineGameViewModel(application: Application) : AndroidViewModel(applicati
     private val diceUseCase  = RollDiceUseCase()
 
     override val boardConfig: com.skd.snake_ladder.data.BoardConfig get() = engine.config
+    override val boardColorScheme: com.skd.snake_ladder.data.BoardColorScheme get() = settings.selectedBoardColor
 
     private val _state    = MutableStateFlow(GameState())
     override val state: StateFlow<GameState> = _state

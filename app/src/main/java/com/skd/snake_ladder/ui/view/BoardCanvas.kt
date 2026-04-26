@@ -12,11 +12,14 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import com.skd.snake_ladder.core.BoardMapper
+import com.skd.snake_ladder.data.BoardColorScheme
+import com.skd.snake_ladder.data.BoardColorSchemes
 import com.skd.snake_ladder.data.BoardConfig
 import com.skd.snake_ladder.data.BoardConfigs
 import kotlin.math.PI
@@ -36,9 +39,10 @@ private val SNAKE_PALETTE = listOf(
 @Composable
 fun BoardCanvas(
     playerPositions:  List<Pair<Int, Color>>,
-    activeSnakeFrom:  Int?         = null,
-    activeLadderFrom: Int?         = null,
-    boardConfig:      BoardConfig  = BoardConfigs.configs[0],
+    activeSnakeFrom:  Int?              = null,
+    activeLadderFrom: Int?              = null,
+    boardConfig:      BoardConfig       = BoardConfigs.configs[0],
+    colorScheme:      BoardColorScheme  = BoardColorSchemes.schemes[0],
 ) {
     Canvas(
         modifier = Modifier
@@ -51,12 +55,12 @@ fun BoardCanvas(
         for (row in 0 until 10) {
             for (col in 0 until 10) {
                 drawRect(
-                    color   = if ((row + col) % 2 == 0) Color(0xFFFFF9C4) else Color(0xFFB3E5FC),
+                    color   = if ((row + col) % 2 == 0) colorScheme.cellLight else colorScheme.cellDark,
                     topLeft = Offset(col * cellSize, row * cellSize),
                     size    = Size(cellSize, cellSize)
                 )
                 drawRect(
-                    color   = Color(0xFFBDBDBD),
+                    color   = colorScheme.gridLine,
                     topLeft = Offset(col * cellSize, row * cellSize),
                     size    = Size(cellSize, cellSize),
                     style   = Stroke(width = 0.8f)
@@ -92,14 +96,14 @@ fun BoardCanvas(
 
         // ── 4. Cell numbers (always on top) ──────────────────────────────
         val textPaint = AndroidPaint().apply {
-            color          = android.graphics.Color.BLACK
+            color          = colorScheme.numberText.toArgb()
             textSize       = cellSize / 4.2f
             textAlign      = AndroidPaint.Align.CENTER
             isFakeBoldText = true
             isAntiAlias    = true
         }
         val bgPaint = AndroidPaint().apply {
-            color       = android.graphics.Color.argb(185, 255, 255, 255)
+            color       = colorScheme.numberBg.toArgb()
             isAntiAlias = true
         }
         for (row in 0 until 10) {
