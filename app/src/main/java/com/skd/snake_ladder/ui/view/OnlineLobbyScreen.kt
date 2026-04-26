@@ -33,12 +33,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.skd.snake_ladder.online.OnlineGameViewModel
 import com.skd.snake_ladder.online.OnlineUiState
+import com.skd.snake_ladder.ui.theme.LocalAppColors
 
 @Composable
 fun OnlineLobbyScreen(
     viewModel: OnlineGameViewModel,
     onBack: () -> Unit
 ) {
+    val colors  = LocalAppColors.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     BackHandler {
@@ -49,7 +51,7 @@ fun OnlineLobbyScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppBgGradient)
+            .background(colors.bgGradient)
     ) {
         AnimatedContent(
             targetState = uiState,

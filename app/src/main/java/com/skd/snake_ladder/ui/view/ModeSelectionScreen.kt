@@ -39,18 +39,21 @@ import com.skd.snake_ladder.R
 import com.skd.snake_ladder.data.BoardConfigs
 import com.skd.snake_ladder.domain.model.GameMode
 import com.skd.snake_ladder.domain.model.ThemeMode
+import com.skd.snake_ladder.ui.theme.LocalAppColors
 import com.skd.snake_ladder.viewmodel.SettingsViewModel
 
-// Token colours — one per possible player slot (indices 0–5)
+// ── Shared token palette & bg gradient (used by other screens too) ─────────────
 internal val PLAYER_COLORS = listOf(
-    Color(0xFF2196F3), // 1 – sky blue
-    Color(0xFFE91E63), // 2 – pink
-    Color(0xFF4CAF50), // 3 – green
-    Color(0xFFFF9800), // 4 – amber
-    Color(0xFF9C27B0), // 5 – purple
-    Color(0xFF00BCD4), // 6 – cyan
+    Color(0xFF2196F3), // sky blue
+    Color(0xFFE91E63), // pink
+    Color(0xFF4CAF50), // green
+    Color(0xFFFF9800), // amber
+    Color(0xFF9C27B0), // purple
+    Color(0xFF00BCD4), // cyan
 )
 
+// Legacy fallback gradient — all screens now use LocalAppColors.current.bgGradient
+@Suppress("unused")
 internal val AppBgGradient = Brush.verticalGradient(
     colorStops = arrayOf(
         0.0f  to Color(0xFF070D1A),
@@ -68,12 +71,13 @@ fun ModeSelectionScreen(
     onResumeSavedGame: () -> Unit = {},
     onPlayOnline: () -> Unit = {}
 ) {
-    // ── Settings state (live) ─────────────────────────────────────────────────
+    val colors = LocalAppColors.current
+
+    // ── Live settings state ────────────────────────────────────────────────────
     val boardIndex   by settingsVm.boardIndex.collectAsStateWithLifecycle()
     val soundEnabled by settingsVm.soundEnabled.collectAsStateWithLifecycle()
     val themeMode    by settingsVm.themeMode.collectAsStateWithLifecycle()
-
-    val activeBoard = BoardConfigs.configs.getOrElse(boardIndex) { BoardConfigs.configs[0] }
+    val activeBoard  = BoardConfigs.configs.getOrElse(boardIndex) { BoardConfigs.configs[0] }
 
     var showSettings     by remember { mutableStateOf(false) }
     var multiExpanded    by remember { mutableStateOf(false) }
@@ -83,76 +87,78 @@ fun ModeSelectionScreen(
     var pendingCount       by remember { mutableStateOf(2) }
     var pendingNames       by remember { mutableStateOf(listOf<String>()) }
 
-    // Gentle floating animation for the emoji logo
-    val infiniteTransition = rememberInfiniteTransition(label = "logo")
-    val logoFloat by infiniteTransition.animateFloat(
-        initialValue   = -6f,
-        targetValue    = 6f,
-        animationSpec  = infiniteRepeatable(
-            animation = tween(2200, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "logo_float"
+    // Gentle floating animation for emoji logo
+    val inf = rememberInfiniteTransition(label = "logo")
+    val logoFloat by inf.animateFloat(
+        initialValue  = -5f, targetValue  = 5f,
+        animationSpec = infiniteRepeatable(
+            tween(2400, easing = FastOutSlowInEasing), RepeatMode.Reverse
+        ), label = "float"
     )
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppBgGradient)
+            .background(colors.bgGradient)
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 22.dp)
-                .padding(top = 12.dp, bottom = 32.dp),
+                .padding(top = 12.dp, bottom = 36.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // ── Top bar ────────────────────────────────────────────────────────
+            // ── Top bar: settings gear ────────────────────────────────────────
             Row(
                 modifier              = Modifier.fillMaxWidth(),
                 verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.End
             ) {
-                IconButton(
-                    onClick  = { showSettings = true },
+                Box(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(Color(0x14FFFFFF))
+                        .background(
+                            if (colors.isDark) Color(0x14FFFFFF) else Color(0x14000000)
+                        )
+                        .clickable { showSettings = true },
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector        = Icons.Default.Settings,
                         contentDescription = "Settings",
-                        tint               = Color(0xFF4FC3F7),
+                        tint               = colors.accent,
                         modifier           = Modifier.size(20.dp)
                     )
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(6.dp))
 
-            // ── Animated logo ──────────────────────────────────────────────────
+            // ── Animated logo ─────────────────────────────────────────────────
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment     = Alignment.CenterVertically,
                 modifier              = Modifier.graphicsLayer { translationY = logoFloat }
             ) {
-                Text("🐍", fontSize = 44.sp)
+                Text("🐍", fontSize = 42.sp)
                 Text("🎲", fontSize = 52.sp)
-                Text("🪜", fontSize = 44.sp)
+                Text("🪜", fontSize = 42.sp)
             }
 
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(12.dp))
 
-            // ── Gradient title ─────────────────────────────────────────────────
+            // ── Title ──────────────────────────────────────────────────────────
             Text(
                 text  = stringResource(R.string.game_title),
                 style = TextStyle(
                     brush = Brush.linearGradient(
-                        listOf(Color(0xFF4FC3F7), Color(0xFFB3E5FC), Color(0xFFFFD700))
+                        if (colors.isDark)
+                            listOf(Color(0xFF4FC3F7), Color(0xFFB3E5FC), Color(0xFFFFD700))
+                        else
+                            listOf(Color(0xFF1565C0), Color(0xFF0288D1), Color(0xFFF9A825))
                     ),
                     fontSize   = 36.sp,
                     fontWeight = FontWeight.ExtraBold
@@ -165,71 +171,69 @@ fun ModeSelectionScreen(
             Text(
                 text      = stringResource(R.string.game_subtitle),
                 fontSize  = 13.sp,
-                color     = Color(0xFF546E7A),
+                color     = colors.textSecondary,
                 textAlign = TextAlign.Center
             )
 
             Spacer(Modifier.height(20.dp))
 
             // ── Live Settings Status Strip ─────────────────────────────────────
-            // Reflects instantly when user changes settings
             Row(
-                modifier              = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0x0DFFFFFF))
-                    .border(1.dp, Color(0x14FFFFFF), RoundedCornerShape(14.dp))
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                    .background(
+                        if (colors.isDark) Color(0x0DFFFFFF) else Color(0x0A000000)
+                    )
+                    .border(
+                        1.dp,
+                        if (colors.isDark) Color(0x14FFFFFF) else Color(0x18000000),
+                        RoundedCornerShape(14.dp)
+                    )
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment     = Alignment.CenterVertically
             ) {
-                // Board chip
-                SettingsChip(
+                StatusChip(
                     icon  = activeBoard.emoji,
                     label = activeBoard.name,
-                    tint  = Color(0xFF4FC3F7),
+                    tint  = colors.accent,
+                    isDark = colors.isDark,
                     onClick = { showSettings = true }
                 )
 
                 VerticalDivider(
-                    modifier  = Modifier.height(24.dp),
-                    color     = Color(0x20FFFFFF),
+                    modifier  = Modifier.height(22.dp),
+                    color     = colors.divider,
                     thickness = 1.dp
                 )
 
-                // Sound chip
                 val soundTint by animateColorAsState(
-                    if (soundEnabled) Color(0xFF4CAF50) else Color(0xFF546E7A),
-                    label = "sound_tint"
+                    targetValue    = if (soundEnabled) Color(0xFF43A047) else colors.textHint,
+                    animationSpec  = tween(300),
+                    label          = "sound"
                 )
-                SettingsChip(
+                StatusChip(
                     icon    = if (soundEnabled) "🔊" else "🔇",
                     label   = if (soundEnabled) "Sound On" else "Sound Off",
                     tint    = soundTint,
+                    isDark  = colors.isDark,
                     onClick = { showSettings = true }
                 )
 
                 VerticalDivider(
-                    modifier  = Modifier.height(24.dp),
-                    color     = Color(0x20FFFFFF),
+                    modifier  = Modifier.height(22.dp),
+                    color     = colors.divider,
                     thickness = 1.dp
                 )
 
-                // Theme chip
-                val themeIcon  = when (themeMode) {
-                    ThemeMode.DARK   -> "🌙"
-                    ThemeMode.LIGHT  -> "☀️"
-                    ThemeMode.SYSTEM -> "📱"
-                }
-                val themeLabel = when (themeMode) {
-                    ThemeMode.DARK   -> "Dark"
-                    ThemeMode.LIGHT  -> "Light"
-                    ThemeMode.SYSTEM -> "System"
-                }
-                SettingsChip(
+                val themeIcon  = when (themeMode) { ThemeMode.DARK -> "🌙"; ThemeMode.LIGHT -> "☀️"; else -> "📱" }
+                val themeLabel = when (themeMode) { ThemeMode.DARK -> "Dark"; ThemeMode.LIGHT -> "Light"; else -> "System" }
+                StatusChip(
                     icon    = themeIcon,
                     label   = themeLabel,
-                    tint    = Color(0xFFFFD700),
+                    tint    = Color(0xFFFFB300),
+                    isDark  = colors.isDark,
                     onClick = { showSettings = true }
                 )
             }
@@ -241,16 +245,17 @@ fun ModeSelectionScreen(
                 text          = stringResource(R.string.select_mode),
                 fontSize      = 11.sp,
                 fontWeight    = FontWeight.Bold,
-                color         = Color(0xFF546E7A),
+                color         = colors.textHint,
                 letterSpacing = 2.sp,
                 textAlign     = TextAlign.Center
             )
 
             Spacer(Modifier.height(14.dp))
 
-            // ── VS Computer card ───────────────────────────────────────────────
+            // ── VS Computer ────────────────────────────────────────────────────
             ModeCard(
                 accentColor = Color(0xFF1565C0),
+                colors      = colors,
                 onClick     = { onModeSelected(GameMode.VS_COMPUTER, 2, emptyList()) }
             ) {
                 Row(
@@ -261,9 +266,7 @@ fun ModeSelectionScreen(
                 ) {
                     ModeIcon(
                         emoji      = "🤖",
-                        background = Brush.linearGradient(
-                            listOf(Color(0xFF1565C0), Color(0xFF0D47A1))
-                        )
+                        background = Brush.linearGradient(listOf(Color(0xFF1565C0), Color(0xFF0D47A1)))
                     )
                     Spacer(Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
@@ -271,23 +274,24 @@ fun ModeSelectionScreen(
                             text       = stringResource(R.string.mode_vs_computer),
                             fontSize   = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            color      = Color(0xFFECEFF1)
+                            color      = colors.textPrimary
                         )
                         Text(
-                            text    = "Challenge the AI · Any time",
+                            text     = "Challenge the AI · Any time",
                             fontSize = 12.sp,
-                            color   = Color(0xFF546E7A)
+                            color    = colors.textSecondary
                         )
                     }
-                    Text("›", fontSize = 24.sp, color = Color(0xFF4FC3F7), fontWeight = FontWeight.Light)
+                    Text("›", fontSize = 24.sp, color = colors.accent, fontWeight = FontWeight.Light)
                 }
             }
 
             Spacer(Modifier.height(10.dp))
 
-            // ── Multiplayer card ───────────────────────────────────────────────
+            // ── Multiplayer ────────────────────────────────────────────────────
             ModeCard(
                 accentColor = Color(0xFF6A1B9A),
+                colors      = colors,
                 onClick     = { multiExpanded = !multiExpanded }
             ) {
                 Column {
@@ -299,9 +303,7 @@ fun ModeSelectionScreen(
                     ) {
                         ModeIcon(
                             emoji      = "👥",
-                            background = Brush.linearGradient(
-                                listOf(Color(0xFF6A1B9A), Color(0xFF4A148C))
-                            )
+                            background = Brush.linearGradient(listOf(Color(0xFF6A1B9A), Color(0xFF4A148C)))
                         )
                         Spacer(Modifier.width(14.dp))
                         Column(modifier = Modifier.weight(1f)) {
@@ -309,22 +311,21 @@ fun ModeSelectionScreen(
                                 text       = stringResource(R.string.mode_multiplayer),
                                 fontSize   = 16.sp,
                                 fontWeight = FontWeight.Bold,
-                                color      = Color(0xFFECEFF1)
+                                color      = colors.textPrimary
                             )
                             Text(
                                 text     = "2 – 6 players · Same device",
                                 fontSize = 12.sp,
-                                color    = Color(0xFF546E7A)
+                                color    = colors.textSecondary
                             )
                         }
                         Text(
-                            text     = if (multiExpanded) "⌃" else "⌄",
+                            text  = if (multiExpanded) "⌃" else "⌄",
                             fontSize = 18.sp,
-                            color    = Color(0xFF9C27B0)
+                            color = Color(0xFF9C27B0)
                         )
                     }
 
-                    // ── Expandable player setup ────────────────────────────────
                     AnimatedVisibility(
                         visible = multiExpanded,
                         enter   = expandVertically(tween(280)) + fadeIn(tween(280)),
@@ -333,27 +334,25 @@ fun ModeSelectionScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color(0x0AFFFFFF))
+                                .background(
+                                    if (colors.isDark) Color(0x0AFFFFFF) else Color(0x06000000)
+                                )
                                 .padding(start = 18.dp, end = 18.dp, bottom = 18.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            HorizontalDivider(color = Color(0x15FFFFFF))
+                            HorizontalDivider(color = colors.divider)
                             Spacer(Modifier.height(16.dp))
 
                             Text(
                                 text          = stringResource(R.string.select_players),
                                 fontSize      = 11.sp,
-                                color         = Color(0xFF546E7A),
+                                color         = colors.textHint,
                                 fontWeight    = FontWeight.Bold,
                                 letterSpacing = 1.5.sp
                             )
                             Spacer(Modifier.height(14.dp))
 
-                            // Number chips 2–6
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment     = Alignment.CenterVertically
-                            ) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 (2..6).forEach { count ->
                                     PlayerCountChip(
                                         count    = count,
@@ -366,7 +365,6 @@ fun ModeSelectionScreen(
 
                             Spacer(Modifier.height(16.dp))
 
-                            // Name input fields
                             Column(
                                 modifier            = Modifier.fillMaxWidth(),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -389,14 +387,14 @@ fun ModeSelectionScreen(
                                                 Text(
                                                     "Player ${idx + 1}",
                                                     fontSize = 13.sp,
-                                                    color    = Color(0xFF37474F)
+                                                    color    = colors.textHint
                                                 )
                                             },
                                             singleLine      = true,
                                             modifier        = Modifier.fillMaxWidth(),
                                             shape           = RoundedCornerShape(10.dp),
                                             textStyle       = TextStyle(
-                                                color    = Color(0xFFECEFF1),
+                                                color    = colors.textPrimary,
                                                 fontSize = 13.sp
                                             ),
                                             keyboardOptions = KeyboardOptions(
@@ -405,9 +403,9 @@ fun ModeSelectionScreen(
                                             ),
                                             colors = OutlinedTextFieldDefaults.colors(
                                                 focusedBorderColor      = PLAYER_COLORS[idx],
-                                                unfocusedBorderColor    = Color(0x22FFFFFF),
-                                                focusedContainerColor   = Color(0x0CFFFFFF),
-                                                unfocusedContainerColor = Color(0x06FFFFFF),
+                                                unfocusedBorderColor    = colors.divider,
+                                                focusedContainerColor   = if (colors.isDark) Color(0x0CFFFFFF) else Color(0x06000000),
+                                                unfocusedContainerColor = if (colors.isDark) Color(0x06FFFFFF) else Color(0x03000000),
                                                 cursorColor             = PLAYER_COLORS[idx]
                                             )
                                         )
@@ -432,8 +430,7 @@ fun ModeSelectionScreen(
                                     .clickable {
                                         val names = nameInputs.take(selectedCount)
                                         if (hasSavedGameForCount(selectedCount)) {
-                                            pendingCount = selectedCount
-                                            pendingNames = names
+                                            pendingCount = selectedCount; pendingNames = names
                                             showContinueDialog = true
                                         } else {
                                             onModeSelected(GameMode.MULTI_PLAYER, selectedCount, names)
@@ -442,10 +439,10 @@ fun ModeSelectionScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text       = stringResource(R.string.start_game, selectedCount),
-                                    fontSize   = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color      = Color.White,
+                                    text          = stringResource(R.string.start_game, selectedCount),
+                                    fontSize      = 15.sp,
+                                    fontWeight    = FontWeight.Bold,
+                                    color         = Color.White,
                                     letterSpacing = 0.5.sp
                                 )
                             }
@@ -456,9 +453,10 @@ fun ModeSelectionScreen(
 
             Spacer(Modifier.height(10.dp))
 
-            // ── Play Online card ───────────────────────────────────────────────
+            // ── Play Online ────────────────────────────────────────────────────
             ModeCard(
                 accentColor = Color(0xFF00695C),
+                colors      = colors,
                 onClick     = onPlayOnline
             ) {
                 Row(
@@ -469,9 +467,7 @@ fun ModeSelectionScreen(
                 ) {
                     ModeIcon(
                         emoji      = "🌐",
-                        background = Brush.linearGradient(
-                            listOf(Color(0xFF00695C), Color(0xFF004D40))
-                        )
+                        background = Brush.linearGradient(listOf(Color(0xFF00695C), Color(0xFF004D40)))
                     )
                     Spacer(Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
@@ -479,61 +475,45 @@ fun ModeSelectionScreen(
                             text       = "Play Online",
                             fontSize   = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            color      = Color(0xFFECEFF1)
+                            color      = colors.textPrimary
                         )
                         Text(
                             text     = "Create or join a room · Real players",
                             fontSize = 12.sp,
-                            color    = Color(0xFF546E7A)
+                            color    = colors.textSecondary
                         )
                     }
-                    Text("›", fontSize = 24.sp, color = Color(0xFF4FC3F7), fontWeight = FontWeight.Light)
+                    Text("›", fontSize = 24.sp, color = colors.accent, fontWeight = FontWeight.Light)
                 }
             }
 
             Spacer(Modifier.height(36.dp))
 
-            // ── Decorative divider ─────────────────────────────────────────────
+            // ── Footer ────────────────────────────────────────────────────────
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier          = Modifier.fillMaxWidth(0.55f)
             ) {
-                Box(
-                    Modifier
-                        .weight(1f)
-                        .height(1.dp)
-                        .background(Brush.horizontalGradient(listOf(Color.Transparent, Color(0x33FFD700))))
-                )
-                Box(
-                    Modifier
-                        .padding(horizontal = 8.dp)
-                        .size(4.dp)
-                        .background(Color(0xFFFFD700), CircleShape)
-                )
-                Box(
-                    Modifier
-                        .weight(1f)
-                        .height(1.dp)
-                        .background(Brush.horizontalGradient(listOf(Color(0x33FFD700), Color.Transparent)))
-                )
+                Box(Modifier.weight(1f).height(1.dp).background(
+                    Brush.horizontalGradient(listOf(Color.Transparent, Color(0x33FFD700)))
+                ))
+                Box(Modifier.padding(horizontal = 8.dp).size(4.dp).background(Color(0xFFFFD700), CircleShape))
+                Box(Modifier.weight(1f).height(1.dp).background(
+                    Brush.horizontalGradient(listOf(Color(0x33FFD700), Color.Transparent))
+                ))
             }
-
-            Spacer(Modifier.height(14.dp))
-
+            Spacer(Modifier.height(12.dp))
             Text(
                 text      = stringResource(R.string.tagline),
                 fontSize  = 11.sp,
-                color     = Color(0xFF37474F),
+                color     = colors.textHint,
                 textAlign = TextAlign.Center
             )
-
             Spacer(Modifier.height(4.dp))
-
-            // "Powered by SKD"
             Text(
                 text          = "Powered by SKD",
                 fontSize      = 10.sp,
-                color         = Color(0x55FFFFFF),
+                color         = if (colors.isDark) Color(0x44FFFFFF) else Color(0x66000000),
                 fontWeight    = FontWeight.SemiBold,
                 letterSpacing = 1.sp,
                 textAlign     = TextAlign.Center
@@ -543,10 +523,11 @@ fun ModeSelectionScreen(
 
     // ── Continue-or-New dialog ────────────────────────────────────────────────
     if (showContinueDialog) {
+        val dialogBg = if (colors.isDark) Color(0xFF111C33) else Color(0xFFFFFFFF)
         AlertDialog(
             onDismissRequest = { showContinueDialog = false },
             shape            = RoundedCornerShape(24.dp),
-            containerColor   = Color(0xFF111C33),
+            containerColor   = dialogBg,
             title = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("🎲", fontSize = 36.sp)
@@ -555,7 +536,7 @@ fun ModeSelectionScreen(
                         text       = "Unfinished Game",
                         fontWeight = FontWeight.ExtraBold,
                         fontSize   = 18.sp,
-                        color      = Color(0xFFECEFF1)
+                        color      = colors.textPrimary
                     )
                 }
             },
@@ -563,7 +544,7 @@ fun ModeSelectionScreen(
                 Text(
                     text      = "You have an unfinished $pendingCount-player game. Continue where you left off, or start a new one?",
                     fontSize  = 14.sp,
-                    color     = Color(0xFF90A4AE),
+                    color     = colors.textSecondary,
                     textAlign = TextAlign.Center
                 )
             },
@@ -572,18 +553,11 @@ fun ModeSelectionScreen(
                     onClick = { showContinueDialog = false; onResumeSavedGame() },
                     shape   = RoundedCornerShape(10.dp),
                     colors  = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
-                ) {
-                    Text("Continue", fontWeight = FontWeight.Bold)
-                }
+                ) { Text("Continue", fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
-                TextButton(
-                    onClick = {
-                        showContinueDialog = false
-                        onModeSelected(GameMode.MULTI_PLAYER, pendingCount, pendingNames)
-                    }
-                ) {
-                    Text("New Game", color = Color(0xFF4FC3F7))
+                TextButton(onClick = { showContinueDialog = false; onModeSelected(GameMode.MULTI_PLAYER, pendingCount, pendingNames) }) {
+                    Text("New Game", color = colors.accent)
                 }
             }
         )
@@ -591,29 +565,23 @@ fun ModeSelectionScreen(
 
     // ── Settings sheet ────────────────────────────────────────────────────────
     if (showSettings) {
-        SettingsSheet(
-            viewModel = settingsVm,
-            onDismiss = { showSettings = false }
-        )
+        SettingsSheet(viewModel = settingsVm, onDismiss = { showSettings = false })
     }
 }
 
 // ── Sub-composables ───────────────────────────────────────────────────────────
 
-/** A quick-glance pill showing one setting value. Tapping it opens settings. */
 @Composable
-private fun SettingsChip(
-    icon: String, label: String, tint: Color, onClick: () -> Unit
-) {
+private fun StatusChip(icon: String, label: String, tint: Color, isDark: Boolean, onClick: () -> Unit) {
     Row(
-        modifier          = Modifier
+        modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(horizontal = 8.dp, vertical = 5.dp),
+        verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(5.dp)
     ) {
-        Text(icon, fontSize = 14.sp)
+        Text(icon, fontSize = 13.sp)
         Text(
             text       = label,
             fontSize   = 11.sp,
@@ -624,32 +592,29 @@ private fun SettingsChip(
 }
 
 @Composable
-private fun ModeCard(
-    accentColor: Color,
-    onClick: () -> Unit,
-    content: @Composable () -> Unit
-) {
+private fun ModeCard(accentColor: Color, colors: com.skd.snake_ladder.ui.theme.AppColors, onClick: () -> Unit, content: @Composable () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(6.dp, RoundedCornerShape(18.dp))
-            .clip(RoundedCornerShape(18.dp))
-            .background(
-                Brush.linearGradient(
-                    listOf(Color(0xFF1A2540), Color(0xFF111C33))
-                )
+            .shadow(
+                elevation    = if (colors.isDark) 6.dp else 4.dp,
+                shape        = RoundedCornerShape(18.dp),
+                ambientColor = if (colors.isDark) Color.Black else accentColor.copy(0.08f),
+                spotColor    = if (colors.isDark) Color.Black else accentColor.copy(0.12f)
             )
-            .border(1.dp, accentColor.copy(alpha = 0.18f), RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(18.dp))
+            .background(colors.cardGradient)
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(18.dp))
             .clickable(onClick = onClick)
     ) {
-        // Subtle left-edge accent bar
+        // Left-edge accent bar
         Box(
             modifier = Modifier
-                .width(3.dp)
+                .width(3.5.dp)
                 .fillMaxHeight()
                 .background(
                     Brush.verticalGradient(
-                        listOf(accentColor.copy(alpha = 0.8f), accentColor.copy(alpha = 0.2f))
+                        listOf(accentColor.copy(alpha = 0.9f), accentColor.copy(alpha = 0.25f))
                     )
                 )
                 .align(Alignment.CenterStart)
@@ -667,19 +632,14 @@ private fun ModeIcon(emoji: String, background: Brush) {
             .clip(RoundedCornerShape(13.dp))
             .background(background),
         contentAlignment = Alignment.Center
-    ) {
-        Text(emoji, fontSize = 22.sp)
-    }
+    ) { Text(emoji, fontSize = 22.sp) }
 }
 
 @Composable
-private fun PlayerCountChip(
-    count: Int, selected: Boolean, color: Color, onClick: () -> Unit
-) {
+private fun PlayerCountChip(count: Int, selected: Boolean, color: Color, onClick: () -> Unit) {
     val bg     = if (selected) color       else Color(0x18FFFFFF)
     val border = if (selected) color       else Color(0x2AFFFFFF)
     val text   = if (selected) Color.White else Color(0x88FFFFFF)
-
     Box(
         modifier = Modifier
             .size(44.dp)
@@ -689,11 +649,6 @@ private fun PlayerCountChip(
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text       = "$count",
-            fontSize   = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color      = text
-        )
+        Text("$count", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = text)
     }
 }
