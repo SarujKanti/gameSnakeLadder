@@ -44,7 +44,6 @@ fun ProfileSection(
 ) {
     val colors = LocalAppColors.current
 
-    // Treat disconnected like eliminated for visual purposes (dimmed, not active)
     val effectiveEliminated = isEliminated || isDisconnected
 
     val borderColor by animateColorAsState(
@@ -56,11 +55,17 @@ fun ProfileSection(
         animationSpec = tween(400), label = "border"
     )
 
+    val borderWidth by animateFloatAsState(
+        targetValue = if (isActive && !effectiveEliminated) 1.8f else 1f,
+        animationSpec = tween(300), label = "borderWidth"
+    )
+
+    // Moderate shadow — same range for all to keep card sizes consistent
     val shadowElevation by animateFloatAsState(
         targetValue = when {
             effectiveEliminated -> 0f
-            isActive            -> 14f
-            else                -> 1f
+            isActive            -> 6f
+            else                -> 2f
         },
         animationSpec = tween(400), label = "shadow"
     )
@@ -78,32 +83,59 @@ fun ProfileSection(
         else           -> colors.cardGradient
     }
 
+    val accentBarColor = when {
+        effectiveEliminated -> Color.Transparent
+        isActive            -> colors.cardBorderActive
+        else                -> Color.Transparent
+    }
+
     Box(modifier = modifier.padding(4.dp)) {
         Box(
             modifier = Modifier
                 .shadow(
                     elevation    = shadowElevation.dp,
                     shape        = RoundedCornerShape(14.dp),
-                    ambientColor = if (isActive && !effectiveEliminated) Color(0xFFFFD700) else Color.Black,
-                    spotColor    = if (isActive && !effectiveEliminated) Color(0xFFFFD700) else Color.Black
+                    ambientColor = if (isActive && !effectiveEliminated)
+                        colors.cardBorderActive.copy(alpha = 0.3f) else Color.Black,
+                    spotColor    = if (isActive && !effectiveEliminated)
+                        colors.cardBorderActive.copy(alpha = 0.2f) else Color.Black
                 )
                 .clip(RoundedCornerShape(14.dp))
                 .background(cardBg)
-                .border(1.dp, borderColor, RoundedCornerShape(14.dp))
-                .padding(horizontal = 8.dp, vertical = 8.dp)
+                .border(borderWidth.dp, borderColor, RoundedCornerShape(14.dp))
         ) {
+            // Active accent bar along the top edge
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(2.5.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                accentBarColor,
+                                accentBarColor.copy(alpha = 0.4f),
+                                Color.Transparent
+                            )
+                        )
+                    )
+                    .align(Alignment.TopCenter)
+            )
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp)
+                    .padding(top = 10.dp, bottom = 8.dp)
             ) {
 
                 // Token dot + name
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment     = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Canvas(modifier = Modifier.size(9.dp)) {
-                        drawCircle(if (effectiveEliminated) Color(0xFF404040) else tokenColor)
+                        drawCircle(if (effectiveEliminated) Color(0xFF808080) else tokenColor)
                         drawCircle(
                             Color(0x66FFFFFF),
                             radius = size.minDimension * 0.22f,
@@ -142,37 +174,43 @@ fun ProfileSection(
 
                 Spacer(Modifier.height(5.dp))
 
-                // Timer bar — only for active, non-eliminated/disconnected player
-                if (isActive && !effectiveEliminated) {
-                    val timerFraction = timeRemaining / 30f
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(3.dp)
-                            .background(colors.timerTrack, RoundedCornerShape(2.dp))
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(timerFraction)
-                                .fillMaxHeight()
-                                .background(
-                                    Brush.horizontalGradient(
-                                        listOf(timerColor, timerColor.copy(alpha = 0.6f))
-                                    ),
-                                    RoundedCornerShape(2.dp)
+                // Timer block — always occupies the same height to keep all cards the same size
+                Box(
+                    modifier        = Modifier
+                        .fillMaxWidth()
+                        .height(28.dp),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    if (isActive && !effectiveEliminated) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            val timerFraction = timeRemaining / 30f
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(3.dp)
+                                    .background(colors.timerTrack, RoundedCornerShape(2.dp))
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(timerFraction)
+                                        .fillMaxHeight()
+                                        .background(
+                                            Brush.horizontalGradient(
+                                                listOf(timerColor, timerColor.copy(alpha = 0.6f))
+                                            ),
+                                            RoundedCornerShape(2.dp)
+                                        )
                                 )
-                        )
+                            }
+                            Spacer(Modifier.height(2.dp))
+                            Text(
+                                text       = "${timeRemaining}s",
+                                color      = timerColor,
+                                fontSize   = 9.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text       = "${timeRemaining}s",
-                        color      = timerColor,
-                        fontSize   = 9.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(Modifier.height(4.dp))
-                } else {
-                    Spacer(Modifier.height(5.dp))
                 }
 
                 // Skip life dots

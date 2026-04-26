@@ -3,12 +3,15 @@ package com.skd.snake_ladder.ui.view
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -126,27 +129,45 @@ fun GameScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp)
+                    .padding(vertical = 6.dp)
             ) {
                 val cdBack = stringResource(R.string.cd_back)
-                TextButton(
-                    onClick  = onBack,
+                // Back button — pill-shaped tinted button
+                Box(
                     modifier = Modifier
                         .align(Alignment.CenterStart)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(colors.accent.copy(alpha = if (colors.isDark) 0.12f else 0.10f))
+                        .border(0.5.dp, colors.accent.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+                        .clickable(
+                            indication        = null,
+                            interactionSource = remember { MutableInteractionSource() },
+                            onClick           = onBack
+                        )
                         .semantics { contentDescription = cdBack }
+                        .padding(horizontal = 14.dp, vertical = 7.dp)
                 ) {
                     Text(
-                        text     = "← ${stringResource(R.string.back_to_menu)}",
-                        fontSize = 13.sp,
-                        color    = colors.accent
+                        text       = "← ${stringResource(R.string.back_to_menu)}",
+                        fontSize   = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color      = colors.accent
                     )
                 }
+                // Gradient title
                 Text(
-                    text       = stringResource(R.string.game_title),
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize   = 17.sp,
-                    color      = colors.textPrimary,
-                    modifier   = Modifier.align(Alignment.Center)
+                    text = stringResource(R.string.game_title),
+                    style = TextStyle(
+                        brush      = Brush.linearGradient(
+                            if (colors.isDark)
+                                listOf(Color(0xFF4FC3F7), Color(0xFFB3E5FC))
+                            else
+                                listOf(Color(0xFF1356B4), Color(0xFF0277BD))
+                        ),
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize   = 18.sp
+                    ),
+                    modifier = Modifier.align(Alignment.Center)
                 )
             }
 
