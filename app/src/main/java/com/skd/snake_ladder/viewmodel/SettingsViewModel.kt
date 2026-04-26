@@ -17,6 +17,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _boardIndex = MutableStateFlow(repo.boardIndex)
     val boardIndex: StateFlow<Int> = _boardIndex
 
+    private val _boardColorIndex = MutableStateFlow(repo.boardColorIndex)
+    val boardColorIndex: StateFlow<Int> = _boardColorIndex
+
     private val _themeMode = MutableStateFlow(repo.themeMode)
     val themeMode: StateFlow<ThemeMode> = _themeMode
 
@@ -28,6 +31,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun setBoardIndex(index: Int) {
         repo.boardIndex = index
         _boardIndex.value = index
+    }
+
+    fun setBoardColorIndex(index: Int) {
+        repo.boardColorIndex = index
+        _boardColorIndex.value = index
     }
 
     fun setThemeMode(mode: ThemeMode) {

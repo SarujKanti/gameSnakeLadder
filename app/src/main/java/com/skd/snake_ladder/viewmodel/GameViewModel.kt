@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.skd.snake_ladder.core.GameEngine
 import com.skd.snake_ladder.core.SoundManager
+import com.skd.snake_ladder.data.BoardColorScheme
 import com.skd.snake_ladder.data.BoardConfig
 import com.skd.snake_ladder.data.SettingsRepository
 import com.skd.snake_ladder.domain.model.GameEvent
@@ -24,8 +25,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application), G
     private val diceUseCase  = RollDiceUseCase()
     private val soundManager = SoundManager(application)
 
-    // Expose the active board config so GameScreen can pass it to BoardCanvas
     override val boardConfig: BoardConfig get() = engine.config
+    override val boardColorScheme: BoardColorScheme get() = settings.selectedBoardColor
 
     private val _state = MutableStateFlow(GameState())
     override val state: StateFlow<GameState> = _state

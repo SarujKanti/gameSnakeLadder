@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.skd.snake_ladder.R
+import com.skd.snake_ladder.data.BoardColorScheme
 import com.skd.snake_ladder.data.BoardConfig
 import com.skd.snake_ladder.domain.model.GameEvent
 import com.skd.snake_ladder.domain.model.GameMode
@@ -51,9 +52,10 @@ fun GameScreen(
     controller: GameController,
     onBack: () -> Unit = {}
 ) {
-    val colors     = LocalAppColors.current
-    val state      by controller.state.collectAsStateWithLifecycle()
-    val boardConfig = controller.boardConfig
+    val colors          = LocalAppColors.current
+    val state           by controller.state.collectAsStateWithLifecycle()
+    val boardConfig      = controller.boardConfig
+    val boardColorScheme = controller.boardColorScheme
 
     BackHandler { onBack() }
 
@@ -234,7 +236,8 @@ fun GameScreen(
                 },
                 activeSnakeFrom  = activeSnakeFrom,
                 activeLadderFrom = activeLadderFrom,
-                boardConfig      = boardConfig
+                boardConfig      = boardConfig,
+                colorScheme      = boardColorScheme
             )
 
             Spacer(Modifier.height(6.dp))
@@ -356,7 +359,8 @@ private fun BoardWithOverlay(
     playerPositions: List<Pair<Int, Color>>,
     activeSnakeFrom: Int?,
     activeLadderFrom: Int?,
-    boardConfig: BoardConfig
+    boardConfig: BoardConfig,
+    colorScheme: BoardColorScheme
 ) {
     Box(
         modifier = Modifier
@@ -371,7 +375,8 @@ private fun BoardWithOverlay(
             playerPositions  = playerPositions,
             activeSnakeFrom  = activeSnakeFrom,
             activeLadderFrom = activeLadderFrom,
-            boardConfig      = boardConfig
+            boardConfig      = boardConfig,
+            colorScheme      = colorScheme
         )
     }
 }
