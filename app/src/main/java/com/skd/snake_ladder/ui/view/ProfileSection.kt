@@ -1,13 +1,8 @@
 package com.skd.snake_ladder.ui.view
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -43,7 +38,6 @@ fun ProfileSection(
     modifier: Modifier = Modifier
 ) {
     val colors = LocalAppColors.current
-
     val effectiveEliminated = isEliminated || isDisconnected
 
     val borderColor by animateColorAsState(
@@ -60,11 +54,10 @@ fun ProfileSection(
         animationSpec = tween(300), label = "borderWidth"
     )
 
-    // Moderate shadow — same range for all to keep card sizes consistent
     val shadowElevation by animateFloatAsState(
         targetValue = when {
             effectiveEliminated -> 0f
-            isActive            -> 6f
+            isActive            -> 5f
             else                -> 2f
         },
         animationSpec = tween(400), label = "shadow"
@@ -83,69 +76,65 @@ fun ProfileSection(
         else           -> colors.cardGradient
     }
 
-    val accentBarColor = when {
-        effectiveEliminated -> Color.Transparent
-        isActive            -> colors.cardBorderActive
-        else                -> Color.Transparent
-    }
-
-    Box(modifier = modifier.padding(4.dp)) {
+    Box(modifier = modifier.padding(horizontal = 4.dp, vertical = 3.dp)) {
         Box(
             modifier = Modifier
                 .shadow(
                     elevation    = shadowElevation.dp,
-                    shape        = RoundedCornerShape(14.dp),
+                    shape        = RoundedCornerShape(12.dp),
                     ambientColor = if (isActive && !effectiveEliminated)
-                        colors.cardBorderActive.copy(alpha = 0.3f) else Color.Black,
+                        colors.cardBorderActive.copy(alpha = 0.25f) else Color.Black,
                     spotColor    = if (isActive && !effectiveEliminated)
-                        colors.cardBorderActive.copy(alpha = 0.2f) else Color.Black
+                        colors.cardBorderActive.copy(alpha = 0.15f) else Color.Black
                 )
-                .clip(RoundedCornerShape(14.dp))
+                .clip(RoundedCornerShape(12.dp))
                 .background(cardBg)
-                .border(borderWidth.dp, borderColor, RoundedCornerShape(14.dp))
+                .border(borderWidth.dp, borderColor, RoundedCornerShape(12.dp))
         ) {
             // Active accent bar along the top edge
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(2.5.dp)
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                accentBarColor,
-                                accentBarColor.copy(alpha = 0.4f),
-                                Color.Transparent
+            if (isActive && !effectiveEliminated) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(2.dp)
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(
+                                    colors.cardBorderActive,
+                                    colors.cardBorderActive.copy(alpha = 0.4f),
+                                    Color.Transparent
+                                )
                             )
                         )
-                    )
-                    .align(Alignment.TopCenter)
-            )
+                        .align(Alignment.TopCenter)
+                )
+            }
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
-                    .padding(top = 10.dp, bottom = 8.dp)
+                    .padding(horizontal = 8.dp, vertical = 7.dp)
             ) {
 
-                // Token dot + name
+                // ── Row 1: token • name • position ──────────────────────────
                 Row(
                     verticalAlignment     = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                    horizontalArrangement = Arrangement.Center,
+                    modifier              = Modifier.fillMaxWidth()
                 ) {
-                    Canvas(modifier = Modifier.size(9.dp)) {
+                    Canvas(modifier = Modifier.size(8.dp)) {
                         drawCircle(if (effectiveEliminated) Color(0xFF808080) else tokenColor)
                         drawCircle(
-                            Color(0x66FFFFFF),
-                            radius = size.minDimension * 0.22f,
+                            Color(0x55FFFFFF),
+                            radius = size.minDimension * 0.25f,
                             center = center.copy(
-                                x = center.x - size.minDimension * 0.20f,
-                                y = center.y - size.minDimension * 0.20f
+                                x = center.x - size.minDimension * 0.18f,
+                                y = center.y - size.minDimension * 0.18f
                             )
                         )
                     }
-                    Spacer(Modifier.width(4.dp))
+                    Spacer(Modifier.width(5.dp))
                     Text(
                         text       = name,
                         fontWeight = FontWeight.Bold,
@@ -153,56 +142,50 @@ fun ProfileSection(
                         color      = if (effectiveEliminated) colors.textOnEliminated else colors.textPrimary,
                         maxLines   = 1
                     )
-                }
-
-                Spacer(Modifier.height(4.dp))
-
-                // Position pill
-                Box(
-                    modifier = Modifier
-                        .background(colors.positionPillBg, RoundedCornerShape(6.dp))
-                        .border(0.5.dp, colors.positionPillBorder, RoundedCornerShape(6.dp))
-                        .padding(horizontal = 8.dp, vertical = 2.dp)
-                ) {
+                    Spacer(Modifier.width(6.dp))
                     Text(
-                        text       = if (position == 0) "Start" else "Pos $position",
-                        color      = if (effectiveEliminated) colors.textHint else colors.textSecondary,
-                        fontSize   = 10.sp,
-                        fontWeight = FontWeight.SemiBold
+                        text       = if (position == 0) "Start" else "#$position",
+                        fontSize   = 9.sp,
+                        fontWeight = FontWeight.Medium,
+                        color      = if (effectiveEliminated) colors.textHint else colors.textSecondary
                     )
                 }
 
                 Spacer(Modifier.height(5.dp))
 
-                // Timer block — always occupies the same height to keep all cards the same size
+                // ── Row 2: timer bar (fixed height, empty for inactive) ──────
+                // Fixed 14dp height for both active and inactive keeps card
+                // heights equal regardless of turn state.
                 Box(
-                    modifier        = Modifier
-                        .fillMaxWidth()
-                        .height(28.dp),
-                    contentAlignment = Alignment.TopCenter
+                    modifier        = Modifier.fillMaxWidth().height(14.dp),
+                    contentAlignment = Alignment.CenterStart
                 ) {
                     if (isActive && !effectiveEliminated) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            val timerFraction = timeRemaining / 30f
+                        Row(
+                            verticalAlignment     = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier              = Modifier.fillMaxWidth()
+                        ) {
+                            // Timer track + fill
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth()
+                                    .weight(1f)
                                     .height(3.dp)
-                                    .background(colors.timerTrack, RoundedCornerShape(2.dp))
+                                    .clip(RoundedCornerShape(2.dp))
+                                    .background(colors.timerTrack)
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .fillMaxWidth(timerFraction)
+                                        .fillMaxWidth(timeRemaining / 30f)
                                         .fillMaxHeight()
                                         .background(
                                             Brush.horizontalGradient(
-                                                listOf(timerColor, timerColor.copy(alpha = 0.6f))
+                                                listOf(timerColor, timerColor.copy(alpha = 0.5f))
                                             ),
                                             RoundedCornerShape(2.dp)
                                         )
                                 )
                             }
-                            Spacer(Modifier.height(2.dp))
                             Text(
                                 text       = "${timeRemaining}s",
                                 color      = timerColor,
@@ -213,83 +196,71 @@ fun ProfileSection(
                     }
                 }
 
-                // Skip life dots
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment     = Alignment.CenterVertically
-                ) {
-                    repeat(3) { i ->
-                        Box(
-                            modifier = Modifier
-                                .size(5.dp)
-                                .background(
-                                    if (i < skipsUsed) Color(0xFFEF5350)
-                                    else colors.skipDotEmpty,
-                                    CircleShape
-                                )
-                        )
-                    }
-                }
-
                 Spacer(Modifier.height(4.dp))
 
-                // Badge: LEFT / OUT / YOUR TURN
-                when {
-                    isDisconnected -> {
-                        Box(
-                            modifier = Modifier
-                                .background(Color(0x33546E7A), RoundedCornerShape(4.dp))
-                                .border(0.5.dp, Color(0x55546E7A), RoundedCornerShape(4.dp))
-                                .padding(horizontal = 7.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text          = "LEFT",
-                                color         = Color(0xFF78909C),
-                                fontSize      = 8.sp,
-                                fontWeight    = FontWeight.ExtraBold,
-                                letterSpacing = 1.sp
-                            )
-                        }
-                    }
-                    isEliminated -> {
-                        Box(
-                            modifier = Modifier
-                                .background(Color(0x33EF5350), RoundedCornerShape(4.dp))
-                                .border(0.5.dp, Color(0x55EF5350), RoundedCornerShape(4.dp))
-                                .padding(horizontal = 7.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text          = "OUT",
-                                color         = Color(0xFFEF5350),
-                                fontSize      = 8.sp,
-                                fontWeight    = FontWeight.ExtraBold,
-                                letterSpacing = 1.sp
-                            )
-                        }
-                    }
-                    else -> {
-                        AnimatedVisibility(
-                            visible = isActive,
-                            enter   = fadeIn(tween(300)) + slideInVertically(tween(300)) { it / 2 },
-                            exit    = fadeOut(tween(200)) + slideOutVertically(tween(200)) { it / 2 }
-                        ) {
+                // ── Row 3: skip dots • badge ─────────────────────────────────
+                Row(
+                    modifier              = Modifier.fillMaxWidth(),
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // Skip life dots
+                    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                        repeat(3) { i ->
                             Box(
                                 modifier = Modifier
-                                    .background(Color(0xFFFFD700), RoundedCornerShape(4.dp))
-                                    .padding(horizontal = 7.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text          = stringResource(R.string.your_turn_badge),
-                                    color         = Color(0xFF1A1200),
-                                    fontSize      = 8.sp,
-                                    fontWeight    = FontWeight.ExtraBold,
-                                    letterSpacing = 0.8.sp
-                                )
-                            }
+                                    .size(5.dp)
+                                    .background(
+                                        if (i < skipsUsed) Color(0xFFEF5350)
+                                        else colors.skipDotEmpty,
+                                        CircleShape
+                                    )
+                            )
                         }
+                    }
+
+                    // Status badge (right side)
+                    when {
+                        isDisconnected -> SmallBadge(
+                            text  = "LEFT",
+                            bg    = Color(0x33546E7A),
+                            border = Color(0x55546E7A),
+                            color = Color(0xFF78909C)
+                        )
+                        isEliminated -> SmallBadge(
+                            text  = "OUT",
+                            bg    = Color(0x33EF5350),
+                            border = Color(0x55EF5350),
+                            color = Color(0xFFEF5350)
+                        )
+                        isActive -> SmallBadge(
+                            text  = stringResource(R.string.your_turn_badge),
+                            bg    = Color(0xFFFFD700),
+                            border = Color.Transparent,
+                            color = Color(0xFF1A1200)
+                        )
+                        else -> Spacer(Modifier.width(1.dp))
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SmallBadge(text: String, bg: Color, border: Color, color: Color) {
+    Box(
+        modifier = Modifier
+            .background(bg, RoundedCornerShape(4.dp))
+            .border(0.5.dp, border, RoundedCornerShape(4.dp))
+            .padding(horizontal = 6.dp, vertical = 2.dp)
+    ) {
+        Text(
+            text          = text,
+            color         = color,
+            fontSize      = 7.sp,
+            fontWeight    = FontWeight.ExtraBold,
+            letterSpacing = 0.6.sp
+        )
     }
 }
