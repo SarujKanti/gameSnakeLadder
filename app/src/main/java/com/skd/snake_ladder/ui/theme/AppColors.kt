@@ -35,6 +35,11 @@ data class AppColors(
     val skipDotEmpty: Color,
     val positionPillBg: Color,
     val positionPillBorder: Color,
+
+    // Player count chips (unselected state)
+    val chipUnselectedBg: Color,
+    val chipUnselectedBorder: Color,
+    val chipUnselectedText: Color,
 )
 
 // ── Dark theme ─────────────────────────────────────────────────────────────────
@@ -62,22 +67,26 @@ val DarkAppColors = AppColors(
     ),
     surfaceSheet = Color(0xFF131F38),
 
-    cardBorder            = Color(0x1AFFFFFF),
-    cardBorderActive      = Color(0xFFFFD700),
-    cardBorderEliminated  = Color(0x44EF5350),
-    cardBorderDisconnected= Color(0x44546E7A),
-    divider               = Color(0x20FFFFFF),
+    cardBorder             = Color(0x22FFFFFF),
+    cardBorderActive       = Color(0xFFFFD700),
+    cardBorderEliminated   = Color(0x44EF5350),
+    cardBorderDisconnected = Color(0x44546E7A),
+    divider                = Color(0x20FFFFFF),
 
-    textPrimary       = Color(0xFFECEFF1),
-    textSecondary     = Color(0xFF78909C),
-    textHint          = Color(0xFF37474F),
-    textOnEliminated  = Color(0xFF4A4A5A),
+    textPrimary      = Color(0xFFECEFF1),
+    textSecondary    = Color(0xFF78909C),
+    textHint         = Color(0xFF37474F),
+    textOnEliminated = Color(0xFF4A4A5A),
 
-    accent           = Color(0xFF4FC3F7),
-    timerTrack       = Color(0x20FFFFFF),
-    skipDotEmpty     = Color(0x25FFFFFF),
-    positionPillBg   = Color(0x14FFFFFF),
-    positionPillBorder = Color(0x1AFFFFFF),
+    accent             = Color(0xFF4FC3F7),
+    timerTrack         = Color(0x20FFFFFF),
+    skipDotEmpty       = Color(0x30FFFFFF),
+    positionPillBg     = Color(0x14FFFFFF),
+    positionPillBorder = Color(0x22FFFFFF),
+
+    chipUnselectedBg     = Color(0x18FFFFFF),
+    chipUnselectedBorder = Color(0x2AFFFFFF),
+    chipUnselectedText   = Color(0x99FFFFFF),
 )
 
 // ── Light theme ────────────────────────────────────────────────────────────────
@@ -86,41 +95,45 @@ val LightAppColors = AppColors(
 
     bgGradient = Brush.verticalGradient(
         colorStops = arrayOf(
-            0.0f  to Color(0xFFEEF4FF),
-            0.50f to Color(0xFFE6EEFA),
-            1.0f  to Color(0xFFDDE8F5)
+            0.0f  to Color(0xFFE8F0FE),
+            0.50f to Color(0xFFDDE8F8),
+            1.0f  to Color(0xFFCFDDF2)
         )
     ),
     cardGradient = Brush.linearGradient(
-        listOf(Color(0xFFFFFFFF), Color(0xFFF5F8FF))
+        listOf(Color(0xFFFFFFFF), Color(0xFFF2F6FF))
     ),
     cardGradientActive = Brush.linearGradient(
-        listOf(Color(0xFFEBF3FF), Color(0xFFDDEBFF))
+        listOf(Color(0xFFE3EFFE), Color(0xFFCEE3FF))
     ),
     cardGradientEliminated = Brush.linearGradient(
-        listOf(Color(0xFFFFF3F3), Color(0xFFFFEBEB))
+        listOf(Color(0xFFFFF3F3), Color(0xFFFFE5E5))
     ),
     cardGradientDisconnected = Brush.linearGradient(
-        listOf(Color(0xFFF5F7FA), Color(0xFFEEF0F5))
+        listOf(Color(0xFFF0F4FA), Color(0xFFE8EEF8))
     ),
     surfaceSheet = Color(0xFFFFFFFF),
 
-    cardBorder            = Color(0xFFDEE8F5),
-    cardBorderActive      = Color(0xFFFFB700),
-    cardBorderEliminated  = Color(0xFFFFCDD2),
-    cardBorderDisconnected= Color(0xFFCFD8DC),
-    divider               = Color(0xFFDEE5EF),
+    cardBorder             = Color(0xFFB8CBE8),
+    cardBorderActive       = Color(0xFFFFAA00),
+    cardBorderEliminated   = Color(0xFFFFB3B3),
+    cardBorderDisconnected = Color(0xFFB0BEC5),
+    divider                = Color(0xFFD0DCF0),
 
-    textPrimary      = Color(0xFF1A2340),
-    textSecondary    = Color(0xFF4A6078),
-    textHint         = Color(0xFF90A4AE),
-    textOnEliminated = Color(0xFFBDBDBD),
+    textPrimary      = Color(0xFF0F1E3D),
+    textSecondary    = Color(0xFF3A5474),
+    textHint         = Color(0xFF7A93AA),
+    textOnEliminated = Color(0xFFB0B8C0),
 
-    accent           = Color(0xFF1565C0),
-    timerTrack       = Color(0x22000000),
-    skipDotEmpty     = Color(0x22000000),
-    positionPillBg   = Color(0x0F1565C0),
-    positionPillBorder = Color(0x22000000),
+    accent             = Color(0xFF1356B4),
+    timerTrack         = Color(0x28000000),
+    skipDotEmpty       = Color(0xFFC0CBDA),
+    positionPillBg     = Color(0x221356B4),
+    positionPillBorder = Color(0x3C1356B4),
+
+    chipUnselectedBg     = Color(0x14000000),
+    chipUnselectedBorder = Color(0x2A000000),
+    chipUnselectedText   = Color(0xFF4A6078),
 )
 
 // ── CompositionLocal ───────────────────────────────────────────────────────────

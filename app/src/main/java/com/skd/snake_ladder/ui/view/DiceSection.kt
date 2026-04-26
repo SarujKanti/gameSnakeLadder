@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.skd.snake_ladder.R
+import com.skd.snake_ladder.ui.theme.LocalAppColors
 import kotlinx.coroutines.delay
 
 @Composable
@@ -83,6 +84,8 @@ fun DiceSection(
             scaleTarget = 1f
         }
     }
+
+    val colors = LocalAppColors.current
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
@@ -181,7 +184,7 @@ fun DiceSection(
             },
             fontSize   = 15.sp,
             fontWeight = FontWeight.Medium,
-            color      = Color(0xFF90CAF9)
+            color      = if (isEnabled) colors.accent else colors.textSecondary
         )
     }
 }

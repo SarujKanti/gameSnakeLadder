@@ -637,9 +637,10 @@ private fun ModeIcon(emoji: String, background: Brush) {
 
 @Composable
 private fun PlayerCountChip(count: Int, selected: Boolean, color: Color, onClick: () -> Unit) {
-    val bg     = if (selected) color       else Color(0x18FFFFFF)
-    val border = if (selected) color       else Color(0x2AFFFFFF)
-    val text   = if (selected) Color.White else Color(0x88FFFFFF)
+    val appColors = LocalAppColors.current
+    val bg     = if (selected) color else appColors.chipUnselectedBg
+    val border = if (selected) color else appColors.chipUnselectedBorder
+    val text   = if (selected) Color.White else appColors.chipUnselectedText
     Box(
         modifier = Modifier
             .size(44.dp)
